@@ -101,7 +101,7 @@ export default function WorldBiblePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="text-center">
           <h1 className="mb-2 text-4xl font-bold text-zinc-900">World Bible</h1>

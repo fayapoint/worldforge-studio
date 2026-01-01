@@ -285,6 +285,24 @@ export default function WorldPage() {
     await load();
   }
 
+  async function deleteEntity(entityId: string) {
+    if (!confirm(`Delete this entity? This action cannot be undone.`)) return;
+    
+    setError(null);
+    const res = await apiFetch<{ deleted: boolean }>(
+      `/api/projects/${projectId}/entities/${entityId}`,
+      { method: "DELETE" },
+    );
+
+    if (!res.ok) {
+      setError(`${res.error.code}: ${res.error.message}`);
+      return;
+    }
+
+    setSelectedId(null);
+    await load();
+  }
+
   async function link() {
     if (!selected) return;
     if (!linkToId || !linkRelType) {
@@ -723,6 +741,13 @@ export default function WorldPage() {
                     <Icon name="exports" className="h-3.5 w-3.5" />
                     Export
                   </SecondaryButton>
+                  <button
+                    onClick={() => deleteEntity(selected._id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+                  >
+                    <Icon name="trash" className="h-3.5 w-3.5" />
+                    Delete
+                  </button>
                 </div>
               </div>
 

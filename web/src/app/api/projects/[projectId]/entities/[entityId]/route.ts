@@ -71,3 +71,31 @@ export async function PATCH(
     return jsonError(err);
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  ctx: { params: Promise<{ projectId: string; entityId: string }> },
+) {
+  try {
+    await ensureIndexes();
+    const auth = await requireAuth(req);
+    requirePermission(auth.roles, "entity:write");
+
+    const { projectId, entityId } = await ctx.params;
+
+    const db = await getDb();
+    const result = await colEntities(db).deleteOne({
+      _id: new ObjectId(entityId),
+      tenantId: new ObjectId(auth.tenantId),
+      projectId: new ObjectId(projectId),
+    });
+
+    if (result.deletedCount === 0) {
+      throw new ApiError("NOT_FOUND", 404, "Entity not found");
+    }
+
+    return jsonOk({ deleted: true });
+  } catch (err: unknown) {
+    return jsonError(err);
+  }
+}

@@ -175,49 +175,258 @@ const LOCATIONS = [
   {
     name: "Angela's Apartment",
     type: "LOCATION",
-    summary: "Small apartment where Angela lives alone. Site of the first discovery and her death.",
+    summary: "A modest, warmly decorated apartment in a quiet residential neighborhood. Filled with plants, family photos, and the comfortable clutter of a life lived alone. The kitchen overlooks a small balcony garden. It's here that Angela first hears the alien voices emanating from her beloved flower plant - and where she meets her terrifying end.",
     attributes: {
       locationType: "apartment",
-      atmosphere: "domestic, then sinister",
-      keyFeatures: "flower plant with jumping spiders, kitchen, bedroom",
-      significance: "Where the story begins - Angela hears the spiders here and is killed here",
+      atmosphere: "Initially warm and domestic, transforms into a claustrophobic death trap",
+      appearance: "Cozy living room with floral wallpaper, aged wooden furniture, crocheted doilies. Kitchen with vintage appliances, always smells of cooking. Bedroom with religious imagery on walls. Balcony filled with potted plants, especially the fateful flower plant housing the jumping spiders.",
+      keyFeatures: "Flower plant with jumping spiders on kitchen windowsill, old CRT television playing soap operas, landline phone Angela uses to call Ricardo, bed where she is killed",
+      lighting: "Warm afternoon light through lace curtains, transforms to cold moonlight during the attack",
+      significance: "Ground zero of the story - where humanity's hidden enemy is first detected, and where they demonstrate their lethal capability",
       firstAppearance: "Episode 1",
     },
   },
   {
-    name: "Photo Shoot Set",
+    name: "Photo Shoot Studio",
     type: "LOCATION",
-    summary: "Professional photography studio where Ricardo works and meets Nicole.",
+    summary: "High-end professional photography studio in the city's fashion district. Modern industrial space with exposed brick, high ceilings, and state-of-the-art equipment. The busy, creative atmosphere makes it impossible for Ricardo to answer Angela's desperate calls.",
     attributes: {
       locationType: "studio",
-      atmosphere: "professional, busy",
-      keyFeatures: "photography equipment, computer systems, lighting rigs",
-      significance: "Where Ricardo and Nicole first meet, why Ricardo misses Angela's call",
+      atmosphere: "Bustling, professional, high-energy creative space",
+      appearance: "Open-plan industrial loft with exposed brick walls, polished concrete floors. Multiple shooting areas with different backdrops. Banks of professional lighting equipment. Computer workstations with large monitors. Wardrobe racks, makeup stations, and catering area.",
+      keyFeatures: "Ricardo's computer workstation running AI real-time software, Nicole's modeling area, large windows overlooking the city, busy crew members blocking Ricardo from his phone",
+      lighting: "Intense professional studio lighting, softboxes, ring lights contrasting with natural light from skylights",
+      significance: "Where Ricardo and Nicole first meet and begin their professional relationship. Ricardo's phone shows Angela's missed calls here.",
       firstAppearance: "Episode 1",
     },
   },
   {
     name: "The Park",
     type: "LOCATION",
-    summary: "Public park where Pedro plays soccer and hears stories from elders.",
+    summary: "A community park in Pedro's neighborhood where elderly residents gather on benches to watch children play soccer. Ancient trees provide shade, and the atmosphere carries weight of generations of stories passed down. Here, Pedro first hears the whispered tales of people who could hear insects.",
     attributes: {
-      locationType: "park",
-      atmosphere: "peaceful, community gathering place",
-      keyFeatures: "soccer field, benches where elders gather",
-      significance: "Where Pedro first hears the elder stories that inspire him to create the Reddit community",
+      locationType: "urban park",
+      atmosphere: "Peaceful but tinged with mystery, where urban legend meets lived experience",
+      appearance: "Large open grass field for soccer, surrounded by mature oak and maple trees. Weathered wooden benches along pathways. Small playground. Old stone fountain (non-functional). Paths worn by decades of footsteps.",
+      keyFeatures: "Benches where elderly storytellers gather, soccer field where Pedro plays, shaded areas where private conversations happen, birds and insects ever-present",
+      lighting: "Dappled afternoon sunlight through leaves, golden hour warmth as elders tell their stories",
+      significance: "The oral tradition hub - where Pedro hears elder stories about people who heard insects and animals, sparking his creation of the Reddit community",
       firstAppearance: "Episode 1",
     },
   },
   {
-    name: "Reddit Community - 'They Can Hear'",
+    name: "Reddit Community - r/TheyCanHear",
     type: "LOCATION",
-    summary: "Secret online community created by Pedro for people who can hear insects and animals.",
+    summary: "A secretive online community hidden in plain sight on Reddit. Created by Pedro after hearing elder stories, it becomes the digital sanctuary for those who can hear the alien frequencies. Members communicate in code, never revealing too much, always paranoid about being monitored.",
     attributes: {
-      locationType: "virtual",
-      atmosphere: "cautious, secretive",
-      keyFeatures: "discussion threads, warning posts about staying silent near insects",
-      significance: "Central hub where all protagonists connect and share information",
+      locationType: "virtual/digital",
+      atmosphere: "Paranoid, secretive, supportive, underground resistance",
+      appearance: "Dark-themed Reddit interface, cryptic usernames, coded language in posts, warning banners about silence near insects",
+      keyFeatures: "Encrypted DMs between members, warning posts about staying silent near insects, testimonial threads, coded meetup arrangements, rules about never speaking aloud about the community",
+      rules: "Never discuss in presence of insects or animals (except dogs). Use coded language. Never reveal real identity. Trust no one new until verified.",
+      significance: "Central digital hub connecting all protagonists - Pedro creates it, Kathrine joins first, Ricardo discovers it after Angela's death",
       firstAppearance: "Episode 1",
+    },
+  },
+  {
+    name: "The Subway",
+    type: "LOCATION",
+    summary: "The city's underground metro system where Ricardo and Nicole travel together after the photo shoot. Crowded carriages, flickering lights, and the ever-present scuttle of rats in the tunnels. Unbeknownst to them, they are being observed.",
+    attributes: {
+      locationType: "public transit",
+      atmosphere: "Crowded, anonymous, surveillance-prone",
+      appearance: "Graffiti-marked stations, yellow lighting, crowded carriages with tired commuters, dark tunnels between stops, rats visible on tracks",
+      keyFeatures: "Crowded carriages where Ricardo and Nicole talk, rats watching from tunnel shadows, cockroaches in station corners, pigeons at entrances",
+      lighting: "Harsh fluorescent station lights, dim carriage interiors, darkness of tunnels",
+      significance: "Where Ricardo and Nicole's friendship deepens, and where they are first unknowingly observed by the alien network",
+      firstAppearance: "Episode 1",
+    },
+  },
+  {
+    name: "The Bar",
+    type: "LOCATION", 
+    summary: "A trendy downtown bar where Ricardo and Nicole go after the photo shoot to decompress. Low lighting, ambient music, and the illusion of privacy. Here they share their first real conversation, unaware of the eyes and ears around them.",
+    attributes: {
+      locationType: "bar/nightlife",
+      atmosphere: "Intimate, relaxed, seemingly private but actually exposed",
+      appearance: "Exposed brick interior, low-hanging Edison bulbs, leather booths, long wooden bar, vintage decor, plants in corners",
+      keyFeatures: "Corner booth where Ricardo and Nicole talk, bar counter with attentive bartender, decorative plants (hosting insects), flies near bar lights",
+      lighting: "Warm amber glow from Edison bulbs, candlelight on tables, neon signs in windows",
+      significance: "First personal connection between Ricardo and Nicole, establishment of their relationship outside work",
+      firstAppearance: "Episode 1",
+    },
+  },
+];
+
+// LORE - World-building rules and history
+const LORE_ENTRIES = [
+  {
+    name: "The Martian Origin",
+    type: "LORE",
+    summary: "Approximately 3 billion years ago, an advanced civilization existed on Mars. When Mars became uninhabitable, they seeded Earth with their consciousness, embedding themselves into the planet's insect and animal life. They have controlled Earth ever since, hidden in plain sight.",
+    attributes: {
+      category: "origin",
+      timeframe: "3 billion years ago to present",
+      keyPoints: [
+        "Ancient Martian civilization faced extinction as Mars died",
+        "They transferred consciousness into Earth's emerging life forms",
+        "Insects and animals became vessels for alien intelligence",
+        "They influenced human evolution while remaining hidden",
+        "Dogs/wolves (canis family) are NOT part of the alien network",
+      ],
+      scientificBasis: "Panspermia theory, meteorite DNA transfer, Mars habitability timeline",
+      significance: "Core mythology explaining why insects and animals can communicate telepathically",
+    },
+  },
+  {
+    name: "The Hearing Phenomenon",
+    type: "LORE",
+    summary: "Certain humans develop the ability to hear the telepathic frequencies used by the alien-controlled insects and animals. This ability is rare, often hereditary, and always dangerous. Those who develop it become targets for elimination.",
+    attributes: {
+      category: "phenomenon",
+      triggers: ["Genetic predisposition from ancestors exposed to meteorites", "Neurodivergence (especially autism)", "Near-death experiences", "Prolonged exposure to certain frequencies"],
+      symptoms: ["Hearing whispers mixed with normal sounds", "Sensing emotions from insects", "Understanding animal intent", "Headaches near large insect colonies"],
+      dangers: ["Aliens immediately target anyone who can hear them", "Speaking about ability alerts the network", "No known way to lose the ability"],
+      significance: "Central plot device - defines who becomes a protagonist and who becomes a victim",
+    },
+  },
+  {
+    name: "The Silence Protocols",
+    type: "LORE",
+    summary: "The alien network has developed sophisticated methods for silencing humans who discover their existence. Throughout history, unexplained disease outbreaks, insect swarms, and animal attacks have been coordinated elimination events.",
+    attributes: {
+      category: "threat",
+      methods: [
+        "Coordinated insect swarm attacks (like Angela's death)",
+        "Disease outbreaks targeting specific regions",
+        "Animal attacks staged to look accidental",
+        "Mind control of certain animals to cause 'accidents'",
+      ],
+      historicalEvents: ["Medieval plague outbreaks", "Unexplained mass hysteria events", "Mysterious disappearances in remote areas"],
+      significance: "Establishes the stakes - discovery means death, and death is elaborately hidden",
+    },
+  },
+];
+
+// RULES - Story world rules and constraints
+const RULES = [
+  {
+    name: "Dogs Are Safe",
+    type: "RULE",
+    summary: "Dogs and all members of the canis family (wolves, foxes, etc.) are NOT part of the alien network. They are the only truly safe animals, and have been humanity's genuine companions throughout history.",
+    attributes: {
+      category: "safety",
+      explanation: "The canis family developed independently and were never integrated into the Martian consciousness network. They genuinely love humans.",
+      implications: ["Protagonists can speak freely around dogs", "Dogs may sense danger from alien-controlled animals", "Dog loyalty is a plot device for protection"],
+      exceptions: "None - all canis are safe",
+    },
+  },
+  {
+    name: "No Magic or Time Travel",
+    type: "RULE",
+    summary: "Everything in this world must be scientifically plausible. No supernatural magic, no time travel, no impossible technology. The alien abilities are based on advanced biology and frequency manipulation, not fantasy.",
+    attributes: {
+      category: "story constraint",
+      allowed: ["Telepathy via frequency manipulation", "Collective consciousness via biological networks", "Enhanced longevity via telomerase manipulation", "Coordinated behavior via pheromones and signals"],
+      forbidden: ["Magic or spells", "Time travel", "Teleportation", "Resurrection", "Mind reading of humans (only communication between aliens)"],
+      purpose: "Maintain horror through plausibility - this could be happening",
+    },
+  },
+  {
+    name: "Secrecy Is Paramount",
+    type: "RULE",
+    summary: "The alien network's primary directive is maintaining secrecy. They will not act openly or spectacularly. All eliminations must appear natural, accidental, or unexplained. Mass exposure would be catastrophic for them.",
+    attributes: {
+      category: "antagonist behavior",
+      implications: [
+        "No spectacular alien reveals or invasions",
+        "Deaths must look like accidents, illness, or crimes",
+        "Large-scale actions require cover stories (outbreaks, natural disasters)",
+        "Individual aliens cannot act independently to protect secrecy",
+      ],
+      weakness: "This secrecy requirement limits their ability to act quickly or openly",
+    },
+  },
+];
+
+// FACTIONS - Groups and organizations
+const FACTIONS = [
+  {
+    name: "The Resistance (r/TheyCanHear)",
+    type: "FACTION",
+    summary: "A loose network of humans who have discovered they can hear the alien frequencies. Operating in secret through online communities and coded communication, they seek to understand the truth and protect each other.",
+    attributes: {
+      members: ["Pedro (founder)", "Kathrine (first member)", "Ricardo (adult ally)", "Nicole (reluctant member)", "Various anonymous online members"],
+      goals: ["Survive", "Understand the alien network", "Find way to fight back", "Recruit and protect others with the ability"],
+      methods: ["Online communication via Reddit", "Coded language", "Avoiding insects during sensitive discussions", "Dogs as protection"],
+      weaknesses: ["Small numbers", "Paranoia limits recruitment", "No real weapons against the aliens", "Members can be picked off individually"],
+    },
+  },
+  {
+    name: "The Hive Network",
+    type: "FACTION",
+    summary: "The collective consciousness of all alien-controlled insects and animals on Earth. Hierarchically organized with regional commanders and a global leadership. They have controlled Earth for billions of years and will not tolerate exposure.",
+    attributes: {
+      structure: ["Global Consciousness (The Antagonist)", "Regional Queens/Leaders (Spider Leader, etc.)", "Local commanders (individual species leaders)", "Soldiers (common insects and animals)"],
+      goals: ["Maintain secrecy at all costs", "Eliminate anyone who can hear them", "Continue silent control of Earth", "Prevent human technological advancement that might detect them"],
+      methods: ["Telepathic communication", "Coordinated attacks", "Disease vector manipulation", "Surveillance through ubiquitous presence"],
+      weaknesses: ["Dogs are outside their network", "Secrecy requirement limits response speed", "Individual members are physically weak"],
+    },
+  },
+  {
+    name: "The Elders",
+    type: "FACTION",
+    summary: "Elderly people in the community who have lived long enough to notice strange patterns. They share stories of people who heard insects, of mysterious deaths, of unexplained events. They are the oral historians of humanity's hidden war.",
+    attributes: {
+      members: ["Unnamed park elders", "Kathrine's grandfather (deceased)", "Various storytellers worldwide"],
+      role: "Keepers of oral tradition, connecting generations of those who noticed the truth",
+      knowledge: ["Stories passed down through generations", "Warnings about speaking near insects", "Historical events that seemed suspicious", "Family histories of 'sensitives'"],
+      significance: "Bridge between past and present, source of initial information for protagonists",
+    },
+  },
+];
+
+// ITEMS - Significant objects
+const ITEMS = [
+  {
+    name: "Angela's Flower Plant",
+    type: "ITEM",
+    summary: "A beautiful flowering plant on Angela's kitchen windowsill, home to a colony of jumping spiders. This innocent-looking plant becomes the site of first contact - and first death.",
+    attributes: {
+      appearance: "Healthy green plant with colorful flowers, sitting in a terracotta pot on the windowsill. Close inspection reveals tiny jumping spiders moving among the leaves.",
+      significance: "The exact location where Angela first hears the alien voices. The spiders here report to the Spider Leader.",
+      symbolism: "Nature's beauty hiding deadly secrets, the threat in domestic spaces",
+    },
+  },
+  {
+    name: "Ricardo's Camera Equipment",
+    type: "ITEM",
+    summary: "Professional-grade video and audio recording equipment that Ricardo always carries. His technical expertise and high-quality gear become crucial for documenting evidence.",
+    attributes: {
+      contents: ["High-end video camera", "Directional microphones", "Audio recording devices", "Laptop with editing software", "Portable hard drives for backup"],
+      significance: "Ricardo's tools become the resistance's documentation system. His audio equipment might eventually detect alien frequencies.",
+      symbolism: "Technology as potential weapon, the importance of evidence and documentation",
+    },
+  },
+  {
+    name: "Pedro's Phone",
+    type: "ITEM",
+    summary: "Pedro's smartphone, practically an extension of his body. He uses it with cyborg-like efficiency to research, communicate, and manage the Reddit community.",
+    attributes: {
+      capabilities: ["Reddit moderation", "Encrypted messaging", "Research and pattern analysis", "Audio recording of stories", "Quick information lookup"],
+      significance: "The command center of the resistance. Through this device, Pedro connects all the protagonists.",
+      symbolism: "Digital native generation's tools in ancient war, technology vs biology",
+    },
+  },
+  {
+    name: "Meteorite Fragment",
+    type: "ITEM",
+    summary: "A fragment of the Oumuamua-like meteorite studied by Kathrine's grandfather. Contains traces of the original Martian biological material. Its existence hints at the scientific proof of alien origin.",
+    attributes: {
+      appearance: "Small, dark rock with unusual crystalline structures. Emits faint, imperceptible frequencies.",
+      location: "Currently unknown - was in grandfather's archaeology lab, may have been hidden or destroyed",
+      significance: "Physical evidence of alien origin. If found, could be key to understanding and potentially fighting the aliens.",
+      scientificValue: "Contains dormant Martian biological material, unusual isotope ratios, frequency-emitting crystals",
     },
   },
 ];
@@ -398,6 +607,90 @@ async function seedTCHStory() {
       console.log(`  ✓ Created: ${loc.name}`);
     }
 
+    console.log("\n📚 Creating Lore Entries...");
+    for (const lore of LORE_ENTRIES) {
+      const entity = {
+        tenantId,
+        projectId,
+        type: lore.type,
+        name: lore.name,
+        summary: lore.summary,
+        attributes: lore.attributes,
+        relationships: [],
+        version: { status: "DRAFT", number: 1 },
+        audit: {
+          createdBy: userId,
+          updatedBy: userId,
+          updatedAt: new Date(),
+        },
+      };
+      await entitiesCol.insertOne(entity);
+      console.log(`  ✓ Created: ${lore.name}`);
+    }
+
+    console.log("\n⚖️ Creating Rules...");
+    for (const rule of RULES) {
+      const entity = {
+        tenantId,
+        projectId,
+        type: rule.type,
+        name: rule.name,
+        summary: rule.summary,
+        attributes: rule.attributes,
+        relationships: [],
+        version: { status: "DRAFT", number: 1 },
+        audit: {
+          createdBy: userId,
+          updatedBy: userId,
+          updatedAt: new Date(),
+        },
+      };
+      await entitiesCol.insertOne(entity);
+      console.log(`  ✓ Created: ${rule.name}`);
+    }
+
+    console.log("\n🏛️ Creating Factions...");
+    for (const faction of FACTIONS) {
+      const entity = {
+        tenantId,
+        projectId,
+        type: faction.type,
+        name: faction.name,
+        summary: faction.summary,
+        attributes: faction.attributes,
+        relationships: [],
+        version: { status: "DRAFT", number: 1 },
+        audit: {
+          createdBy: userId,
+          updatedBy: userId,
+          updatedAt: new Date(),
+        },
+      };
+      await entitiesCol.insertOne(entity);
+      console.log(`  ✓ Created: ${faction.name}`);
+    }
+
+    console.log("\n🔮 Creating Items...");
+    for (const item of ITEMS) {
+      const entity = {
+        tenantId,
+        projectId,
+        type: item.type,
+        name: item.name,
+        summary: item.summary,
+        attributes: item.attributes,
+        relationships: [],
+        version: { status: "DRAFT", number: 1 },
+        audit: {
+          createdBy: userId,
+          updatedBy: userId,
+          updatedAt: new Date(),
+        },
+      };
+      await entitiesCol.insertOne(entity);
+      console.log(`  ✓ Created: ${item.name}`);
+    }
+
     console.log("\n📖 Creating Story Chapters (Episodes)...");
 
     for (const episode of EPISODES_SEASON_1) {
@@ -493,8 +786,13 @@ async function seedTCHStory() {
     console.log(`\n📊 Summary:`);
     console.log(`  - ${CHARACTERS.length} characters created`);
     console.log(`  - ${LOCATIONS.length} locations created`);
+    console.log(`  - ${LORE_ENTRIES.length} lore entries created`);
+    console.log(`  - ${RULES.length} rules created`);
+    console.log(`  - ${FACTIONS.length} factions created`);
+    console.log(`  - ${ITEMS.length} items created`);
     console.log(`  - ${EPISODES_SEASON_1.length} episodes created`);
     console.log(`  - ${EPISODES_SEASON_1.reduce((sum, ep) => sum + ep.scenes.length, 0)} scenes created`);
+    console.log(`\n📦 Total entities: ${CHARACTERS.length + LOCATIONS.length + LORE_ENTRIES.length + RULES.length + FACTIONS.length + ITEMS.length}`);
 
   } catch (error) {
     console.error("Error seeding TCH story:", error);

@@ -13,7 +13,7 @@ export type CollectionLike<T> = {
   findOne(filter: Record<string, unknown>): Promise<T | null>;
   insertOne(doc: T): Promise<unknown>;
   updateOne(filter: Record<string, unknown>, update: Record<string, unknown>): Promise<unknown>;
-  deleteOne?(filter: Record<string, unknown>): Promise<{ deletedCount: number }>;
+  deleteOne(filter: Record<string, unknown>): Promise<{ deletedCount: number }>;
   findOneAndUpdate(
     filter: Record<string, unknown>,
     update: Record<string, unknown>,
