@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Icon, type IconName } from "@/lib/ui";
 import type { StoryNode, StoryNodeCinematicSettings, SceneVersion } from "@/lib/models";
 import { IconOption } from "@/components/GlassCard";
@@ -41,6 +41,193 @@ type ScenePreviewModalProps = {
   onUpdate: (nodeId: string, data: Partial<StoryNode>) => Promise<void>;
   saving?: boolean;
 };
+
+// Image Crop Editor Component
+function ImageCropEditor({
+  imageUrl,
+  onCrop,
+  onClose,
+  targetType,
+}: {
+  imageUrl: string;
+  onCrop: (croppedDataUrl: string) => void;
+  onClose: () => void;
+  targetType: 'first' | 'last';
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [selection, setSelection] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      imgRef.current = img;
+      setImageLoaded(true);
+      // Default selection: center 16:9 region
+      const aspectRatio = 16 / 9;
+      const maxWidth = Math.min(img.width, 600);
+      const maxHeight = maxWidth / aspectRatio;
+      setSelection({
+        x: (img.width - maxWidth) / 2,
+        y: (img.height - maxHeight) / 2,
+        width: maxWidth,
+        height: maxHeight,
+      });
+    };
+    img.src = imageUrl;
+  }, [imageUrl]);
+
+  useEffect(() => {
+    if (!imageLoaded || !canvasRef.current || !imgRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = imgRef.current;
+    const scale = Math.min(600 / img.width, 400 / img.height, 1);
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+
+    // Draw image
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    // Darken non-selected area
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw selected area (clear the darkening)
+    const scaledSelection = {
+      x: selection.x * scale,
+      y: selection.y * scale,
+      width: selection.width * scale,
+      height: selection.height * scale,
+    };
+    ctx.drawImage(
+      img,
+      selection.x, selection.y, selection.width, selection.height,
+      scaledSelection.x, scaledSelection.y, scaledSelection.width, scaledSelection.height
+    );
+
+    // Draw selection border
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(scaledSelection.x, scaledSelection.y, scaledSelection.width, scaledSelection.height);
+
+    // Draw corner handles
+    ctx.fillStyle = '#6366f1';
+    const handleSize = 8;
+    const corners = [
+      { x: scaledSelection.x, y: scaledSelection.y },
+      { x: scaledSelection.x + scaledSelection.width, y: scaledSelection.y },
+      { x: scaledSelection.x, y: scaledSelection.y + scaledSelection.height },
+      { x: scaledSelection.x + scaledSelection.width, y: scaledSelection.y + scaledSelection.height },
+    ];
+    corners.forEach(corner => {
+      ctx.fillRect(corner.x - handleSize / 2, corner.y - handleSize / 2, handleSize, handleSize);
+    });
+  }, [imageLoaded, selection]);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || !imgRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scale = Math.min(600 / imgRef.current.width, 400 / imgRef.current.height, 1);
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
+    setStartPos({ x, y });
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDragging || !canvasRef.current || !imgRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scale = Math.min(600 / imgRef.current.width, 400 / imgRef.current.height, 1);
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
+
+    const width = Math.abs(x - startPos.x);
+    const height = width / (16 / 9); // Maintain 16:9 aspect ratio
+
+    setSelection({
+      x: Math.min(startPos.x, x),
+      y: Math.min(startPos.y, startPos.y + (y > startPos.y ? 0 : -height)),
+      width,
+      height,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleCrop = () => {
+    if (!imgRef.current) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = selection.width;
+    canvas.height = selection.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(
+      imgRef.current,
+      selection.x, selection.y, selection.width, selection.height,
+      0, 0, selection.width, selection.height
+    );
+
+    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    onCrop(croppedDataUrl);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-[700px] w-full shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-zinc-900">
+            Crop for {targetType === 'first' ? 'First' : 'Last'} Frame
+          </h3>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-zinc-100">
+            <Icon name="x" className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <p className="text-sm text-zinc-500 mb-4">
+          Click and drag to select a 16:9 region from your thumbnail
+        </p>
+
+        <div className="flex justify-center mb-4 bg-zinc-100 rounded-xl p-4">
+          <canvas
+            ref={canvasRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className="cursor-crosshair rounded-lg"
+            style={{ maxWidth: '100%', maxHeight: '400px' }}
+          />
+        </div>
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 font-medium hover:bg-zinc-200 transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleCrop}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:scale-105 transition-all"
+          >
+            Set as {targetType === 'first' ? 'First' : 'Last'} Frame
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Compact Icon Selector for cinematic options with highlighting support
 function CompactSelector({ 
@@ -130,6 +317,14 @@ export function ScenePreviewModal({
   const [activeSection, setActiveSection] = useState<'overview' | 'cinematic' | 'prompt'>('overview');
   const [hasChanges, setHasChanges] = useState(false);
   const [highlightedPromptSection, setHighlightedPromptSection] = useState<string | null>(null);
+  
+  // Image management state
+  const [showCropEditor, setShowCropEditor] = useState(false);
+  const [cropTarget, setCropTarget] = useState<'first' | 'last'>('first');
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const firstFrameInputRef = useRef<HTMLInputElement>(null);
+  const lastFrameInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Build live prompt from selections
   const buildLivePrompt = () => {
@@ -299,6 +494,122 @@ export function ScenePreviewModal({
     setHasChanges(true);
   };
 
+  // Image upload handlers
+  const handleImageUpload = async (file: File, type: 'thumbnail' | 'first' | 'last') => {
+    setUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        
+        // Resize image
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement('canvas');
+          const maxSize = type === 'thumbnail' ? 300 : 800;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          const resizedBase64 = canvas.toDataURL('image/jpeg', 0.9);
+          
+          const imageData = {
+            url: resizedBase64,
+            uploadedAt: new Date(),
+            width,
+            height,
+          };
+
+          // Update the active version with the new image
+          if (node.versionHistory?.versions.length) {
+            const updatedVersions = node.versionHistory.versions.map(v => {
+              if (v.versionNumber === node.versionHistory?.activeVersionNumber) {
+                if (type === 'thumbnail') {
+                  return { ...v, thumbnail: imageData };
+                } else if (type === 'first') {
+                  return { ...v, firstFrame: imageData };
+                } else {
+                  return { ...v, lastFrame: imageData };
+                }
+              }
+              return v;
+            });
+            
+            await onUpdate(node._id, {
+              ...(type === 'thumbnail' ? { thumbnail: imageData } : {}),
+              versionHistory: {
+                versions: updatedVersions,
+                activeVersionNumber: node.versionHistory.activeVersionNumber,
+              },
+            });
+          } else {
+            // No version history
+            if (type === 'thumbnail') {
+              await onUpdate(node._id, { thumbnail: imageData });
+            }
+          }
+          setUploadingImage(false);
+        };
+        img.src = base64;
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Failed to upload image:", err);
+      setUploadingImage(false);
+    }
+  };
+
+  const handleCropComplete = async (croppedDataUrl: string) => {
+    const imageData = {
+      url: croppedDataUrl,
+      uploadedAt: new Date(),
+    };
+
+    // Update the active version with the cropped frame
+    if (node.versionHistory?.versions.length) {
+      const updatedVersions = node.versionHistory.versions.map(v => {
+        if (v.versionNumber === node.versionHistory?.activeVersionNumber) {
+          if (cropTarget === 'first') {
+            return { ...v, firstFrame: imageData };
+          } else {
+            return { ...v, lastFrame: imageData };
+          }
+        }
+        return v;
+      });
+      
+      await onUpdate(node._id, {
+        versionHistory: {
+          versions: updatedVersions,
+          activeVersionNumber: node.versionHistory.activeVersionNumber,
+        },
+      });
+    }
+    setShowCropEditor(false);
+  };
+
+  const openCropEditor = (target: 'first' | 'last') => {
+    setCropTarget(target);
+    setShowCropEditor(true);
+  };
+
+  const thumbnailUrl = activeVersion?.thumbnail?.url || activeVersion?.firstFrame?.url || node.thumbnail?.url;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div className="w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-3xl bg-white/95 backdrop-blur-xl shadow-2xl border border-white/50">
@@ -384,47 +695,148 @@ export function ScenePreviewModal({
             <div className="grid grid-cols-2 gap-6">
               {/* Left Column - Images & Basic Info */}
               <div className="space-y-4">
-                {/* Main Scene Image - prioritize active version's thumbnail/firstFrame, fallback to node thumbnail */}
-                {(activeVersion?.thumbnail?.url || activeVersion?.firstFrame?.url || node.thumbnail?.url) && (
-                  <div className="relative rounded-2xl overflow-hidden shadow-lg">
-                    <img 
-                      src={activeVersion?.thumbnail?.url || activeVersion?.firstFrame?.url || node.thumbnail?.url} 
-                      alt="Scene thumbnail" 
-                      className="w-full aspect-video object-cover"
-                    />
-                    {(activeVersion?.thumbnail?.url || activeVersion?.firstFrame?.url) && (
-                      <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded-lg text-[10px] text-white font-medium">
-                        Version {activeVersion.versionNumber}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Hidden file inputs */}
+                <input
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'thumbnail')}
+                />
+                <input
+                  ref={firstFrameInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'first')}
+                />
+                <input
+                  ref={lastFrameInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'last')}
+                />
 
-                {/* Frame Images */}
-                {activeVersion && (activeVersion.firstFrame || activeVersion.lastFrame) && (
-                  <div className="grid grid-cols-2 gap-3">
-                    {activeVersion.firstFrame && (
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-zinc-500 uppercase">First Frame</label>
-                        <img 
-                          src={activeVersion.firstFrame.url} 
-                          alt="First frame" 
-                          className="w-full rounded-xl object-cover aspect-video"
-                        />
+                {/* Main Scene Thumbnail */}
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-indigo-900 flex items-center gap-2">
+                      <Icon name="image" className="h-4 w-4" />
+                      Scene Thumbnail
+                    </h4>
+                    <button
+                      onClick={() => thumbnailInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      <Icon name="plus" className="h-3 w-3" />
+                      {uploadingImage ? 'Uploading...' : 'Upload'}
+                    </button>
+                  </div>
+                  
+                  {thumbnailUrl ? (
+                    <div className="relative rounded-xl overflow-hidden shadow-lg group">
+                      <img 
+                        src={thumbnailUrl} 
+                        alt="Scene thumbnail" 
+                        className="w-full aspect-video object-cover"
+                      />
+                      {activeVersion && (
+                        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded-lg text-[10px] text-white font-medium">
+                          Version {activeVersion.versionNumber}
+                        </div>
+                      )}
+                      {/* Crop buttons overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+                        <button
+                          onClick={() => openCropEditor('first')}
+                          className="px-3 py-2 rounded-lg bg-white/90 text-zinc-800 text-xs font-medium hover:bg-white transition-all flex items-center gap-1.5"
+                        >
+                          <Icon name="maximize" className="h-3 w-3" />
+                          Crop → First Frame
+                        </button>
+                        <button
+                          onClick={() => openCropEditor('last')}
+                          className="px-3 py-2 rounded-lg bg-white/90 text-zinc-800 text-xs font-medium hover:bg-white transition-all flex items-center gap-1.5"
+                        >
+                          <Icon name="maximize" className="h-3 w-3" />
+                          Crop → Last Frame
+                        </button>
                       </div>
-                    )}
-                    {activeVersion.lastFrame && (
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-zinc-500 uppercase">Last Frame</label>
-                        <img 
-                          src={activeVersion.lastFrame.url} 
-                          alt="Last frame" 
-                          className="w-full rounded-xl object-cover aspect-video"
-                        />
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => thumbnailInputRef.current?.click()}
+                      className="flex flex-col items-center justify-center py-8 rounded-xl border-2 border-dashed border-indigo-300 bg-white/50 cursor-pointer hover:bg-white/80 transition-all"
+                    >
+                      <Icon name="image" className="h-8 w-8 text-indigo-400 mb-2" />
+                      <p className="text-sm text-indigo-600 font-medium">Click to upload thumbnail</p>
+                      <p className="text-xs text-indigo-400 mt-1">JPG, PNG up to 10MB</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* First & Last Frame */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* First Frame */}
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-emerald-700 uppercase">First Frame</label>
+                      <button
+                        onClick={() => firstFrameInputRef.current?.click()}
+                        disabled={uploadingImage}
+                        className="p-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-all disabled:opacity-50"
+                      >
+                        <Icon name="plus" className="h-3 w-3" />
+                      </button>
+                    </div>
+                    {activeVersion?.firstFrame ? (
+                      <img 
+                        src={activeVersion.firstFrame.url} 
+                        alt="First frame" 
+                        className="w-full rounded-lg object-cover aspect-video"
+                      />
+                    ) : (
+                      <div 
+                        onClick={() => thumbnailUrl ? openCropEditor('first') : firstFrameInputRef.current?.click()}
+                        className="flex flex-col items-center justify-center py-4 rounded-lg border border-dashed border-emerald-300 bg-white/50 cursor-pointer hover:bg-white transition-all"
+                      >
+                        <Icon name="image" className="h-5 w-5 text-emerald-400 mb-1" />
+                        <p className="text-[10px] text-emerald-500">{thumbnailUrl ? 'Crop from thumbnail' : 'Upload'}</p>
                       </div>
                     )}
                   </div>
-                )}
+
+                  {/* Last Frame */}
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-rose-700 uppercase">Last Frame</label>
+                      <button
+                        onClick={() => lastFrameInputRef.current?.click()}
+                        disabled={uploadingImage}
+                        className="p-1 rounded-md bg-rose-600 text-white hover:bg-rose-700 transition-all disabled:opacity-50"
+                      >
+                        <Icon name="plus" className="h-3 w-3" />
+                      </button>
+                    </div>
+                    {activeVersion?.lastFrame ? (
+                      <img 
+                        src={activeVersion.lastFrame.url} 
+                        alt="Last frame" 
+                        className="w-full rounded-lg object-cover aspect-video"
+                      />
+                    ) : (
+                      <div 
+                        onClick={() => thumbnailUrl ? openCropEditor('last') : lastFrameInputRef.current?.click()}
+                        className="flex flex-col items-center justify-center py-4 rounded-lg border border-dashed border-rose-300 bg-white/50 cursor-pointer hover:bg-white transition-all"
+                      >
+                        <Icon name="image" className="h-5 w-5 text-rose-400 mb-1" />
+                        <p className="text-[10px] text-rose-500">{thumbnailUrl ? 'Crop from thumbnail' : 'Upload'}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* Version Info */}
                 {activeVersion && (
@@ -1036,6 +1448,16 @@ export function ScenePreviewModal({
           </div>
         </div>
       </div>
+
+      {/* Crop Editor Modal */}
+      {showCropEditor && thumbnailUrl && (
+        <ImageCropEditor
+          imageUrl={thumbnailUrl}
+          targetType={cropTarget}
+          onCrop={handleCropComplete}
+          onClose={() => setShowCropEditor(false)}
+        />
+      )}
     </div>
   );
 }
