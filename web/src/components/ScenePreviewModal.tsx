@@ -113,8 +113,16 @@ export function ScenePreviewModal({
   const [editedNode, setEditedNode] = useState<Partial<StoryNode>>({
     title: activeVersion?.title || node.title,
     synopsis: activeVersion?.synopsis || node.synopsis,
-    goals: activeVersion?.goals ? { ...activeVersion.goals } : { ...node.goals },
-    hooks: activeVersion?.hooks ? { ...activeVersion.hooks } : { ...node.hooks },
+    goals: {
+      dramaticGoal: activeVersion?.goals?.dramaticGoal || node.goals?.dramaticGoal || '',
+      conflict: activeVersion?.goals?.conflict || node.goals?.conflict || '',
+      turn: activeVersion?.goals?.turn || node.goals?.turn || '',
+    },
+    hooks: {
+      hook: activeVersion?.hooks?.hook || node.hooks?.hook || '',
+      foreshadow: activeVersion?.hooks?.foreshadow || node.hooks?.foreshadow || [],
+      payoffTargets: activeVersion?.hooks?.payoffTargets || node.hooks?.payoffTargets || [],
+    },
   });
   const [editedSettings, setEditedSettings] = useState<StoryNodeCinematicSettings>(
     activeVersion?.cinematicSettings || node.cinematicSettings || {}
