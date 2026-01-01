@@ -218,29 +218,41 @@ export default function WorldPage() {
       return;
     }
 
-    setEditMedia((m) => {
-      const cur = m ?? {};
+    const cur = editMedia ?? {};
+    let newMedia: EntityMedia;
 
-      if (slot === "thumbnail") {
-        return { ...cur, thumbnailUrl: secureUrl, thumbnailPublicId: publicId };
-      }
-      if (slot === "face") {
-        return { ...cur, faceUrl: secureUrl, facePublicId: publicId };
-      }
-      if (slot === "pose") {
-        return {
-          ...cur,
-          poseUrls: [...(cur.poseUrls ?? []), secureUrl],
-          posePublicIds: [...(cur.posePublicIds ?? []), publicId],
-        };
-      }
-
-      return {
+    if (slot === "thumbnail") {
+      newMedia = { ...cur, thumbnailUrl: secureUrl, thumbnailPublicId: publicId };
+    } else if (slot === "face") {
+      newMedia = { ...cur, faceUrl: secureUrl, facePublicId: publicId };
+    } else if (slot === "pose") {
+      newMedia = {
+        ...cur,
+        poseUrls: [...(cur.poseUrls ?? []), secureUrl],
+        posePublicIds: [...(cur.posePublicIds ?? []), publicId],
+      };
+    } else {
+      newMedia = {
         ...cur,
         referenceUrls: [...(cur.referenceUrls ?? []), secureUrl],
         referencePublicIds: [...(cur.referencePublicIds ?? []), publicId],
       };
-    });
+    }
+
+    setEditMedia(newMedia);
+
+    // Auto-save the media to database
+    const saveRes = await apiFetch<{ entity: Entity }>(
+      `/api/projects/${projectId}/entities/${selected._id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ media: newMedia }),
+      },
+    );
+
+    if (!saveRes.ok) {
+      setError(`${saveRes.error.code}: ${saveRes.error.message}`);
+    }
   }
 
   async function save() {
