@@ -50,11 +50,35 @@ function readCloudinaryUrlFromProjectCredentials(): string | null {
 }
 
 export function getEnv(): Env {
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  // In production, require env vars - no fallbacks
+  if (isProduction) {
+    const mongodbUri = process.env.MONGODB_URI;
+    const mongodbDb = process.env.MONGODB_DB;
+    const jwtSecret = process.env.JWT_SECRET;
+    
+    if (!mongodbUri) {
+      throw new Error("MONGODB_URI environment variable is required in production");
+    }
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET environment variable is required in production");
+    }
+    
+    return {
+      mongodbUri,
+      mongodbDb: mongodbDb || "worldforge",
+      jwtSecret,
+      cloudinaryUrl: process.env.CLOUDINARY_URL,
+    };
+  }
+  
+  // In development, allow fallbacks and reading from PROJECT_CREDENTIALS.md
   const fromFile = process.env.MONGODB_URI ? null : readMongoUriFromProjectCredentials();
   const cloudinaryFromFile = process.env.CLOUDINARY_URL ? null : readCloudinaryUrlFromProjectCredentials();
+  
   return {
-    mongodbUri:
-      process.env.MONGODB_URI ?? fromFile ?? "mongodb://127.0.0.1:27017/worldforge",
+    mongodbUri: process.env.MONGODB_URI ?? fromFile ?? "mongodb://127.0.0.1:27017/worldforge",
     mongodbDb: process.env.MONGODB_DB ?? "worldforge",
     jwtSecret: process.env.JWT_SECRET ?? "dev-secret-change-me",
     cloudinaryUrl: process.env.CLOUDINARY_URL ?? cloudinaryFromFile ?? undefined,

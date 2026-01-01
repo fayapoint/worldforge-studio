@@ -17,6 +17,8 @@
 # Environment variables for build
 [build.environment]
   NODE_VERSION = "20"
+  # Skip secrets scanning for server-side env vars (they're expected in SSR code)
+  SECRETS_SCAN_OMIT_KEYS = "MONGODB_DB,JWT_SECRET,MONGODB_URI,OPENROUTER_API_KEY"
 
 # Headers for security
 [[headers]]
