@@ -1,13 +1,10 @@
-# Netlify configuration for monorepo with Next.js app in /web folder
+# Netlify configuration for Next.js app
 
 [build]
-  # Base directory - the folder that contains the Next.js app
-  base = "web"
-  
   # Build command
   command = "npm install && npm run build"
   
-  # Publish directory - handled by Next.js plugin, but set to .next for SSR
+  # Publish directory
   publish = ".next"
 
 # Next.js plugin for Netlify (handles SSR, ISR, etc.)
