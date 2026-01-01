@@ -1,14 +1,20 @@
 const { MongoClient, ObjectId } = require("mongodb");
+require("dotenv").config({ path: ".env.local" });
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017";
-const DB_NAME = "tch";
+const DB_NAME = process.env.MONGODB_DB || "worldforge";
 
 // Project ID - replace with your actual TCH project ID
 const PROJECT_ID = "6953ded54c64681e81e0aeca";
 const TENANT_ID = "6953de7b4c64681e81e0aec8";
 const USER_ID = "6953de7b4c64681e81e0aec9";
 
+// ============================================================================
+// COMPREHENSIVE TCH WORLD BIBLE - COMPLETE ENTITY DATABASE
+// ============================================================================
+
 const CHARACTERS = [
+  // ==================== MAIN PROTAGONISTS ====================
   {
     name: "Angela Cruz",
     summary: "Curious woman in her mid-60s who first discovers she can hear spiders. Dies in Episode 2.",
@@ -169,9 +175,244 @@ const CHARACTERS = [
       significance: "Main antagonist force throughout the series",
     },
   },
+  // ==================== SUPPORTING CHARACTERS ====================
+  {
+    name: "Pedro's Mother (Maria Martinez)",
+    summary: "Single mother and night-shift nurse who struggles to understand her son's obsessions. Works tirelessly to provide for Pedro after his father's mysterious death.",
+    character: {
+      fullName: "Maria Martinez",
+      age: "early 40s",
+      pronouns: "she/her",
+      role: "supporting",
+      occupation: "night-shift nurse at city hospital",
+      personality: "Exhausted but loving. Worries constantly about Pedro's isolation and his 'conspiracy theories'. Practical and grounded, dismisses Pedro's claims about insects as imagination. Deep down, suspects there's more to her husband's death.",
+      appearance: "Tired eyes with dark circles from night shifts. Wears scrubs often. Dark hair usually in a practical ponytail. Warm smile despite exhaustion.",
+      backstory: "Lost her husband during a mysterious biological outbreak at his workplace 5 years ago. The official story never made sense to her. Now works double shifts to support Pedro. Her family has a history of 'sensitive' members who died young.",
+      motivation: "Protect Pedro from whatever took his father. Keep the family afloat financially. Suppress her own suspicions about her husband's death.",
+      voiceNotes: "Speaks with maternal warmth but also frustration. Uses practical, no-nonsense language. Voice cracks when discussing her late husband.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 3",
+      keyTraits: ["protective", "exhausted", "skeptical", "secretly suspicious"],
+      significance: "Represents the adult world's denial, but also potential ally if awakened",
+    },
+  },
+  {
+    name: "Old Man Santos",
+    summary: "Elderly storyteller in the park who has collected decades of tales about 'those who hear'. A keeper of oral history who knows more than he lets on.",
+    character: {
+      fullName: "Joaquim Santos",
+      age: "82",
+      pronouns: "he/him",
+      role: "supporting",
+      occupation: "retired, former postal worker",
+      personality: "Wise and patient. Speaks in riddles and stories. Never directly confirms anything but guides those who are ready to listen. Has a twinkle in his eye that suggests deep knowledge.",
+      appearance: "Weathered brown skin, white hair, uses a wooden cane. Wears old but clean clothes. Always sits on the same park bench. Has a small dog named Rex who never leaves his side.",
+      backstory: "Lost his sister to a 'wasp attack' when he was 15. His grandfather was a sensitive who taught him the old stories. Has spent 60 years collecting accounts of others who could hear. Never speaks about it openly - only in parables.",
+      motivation: "Pass the knowledge to the next generation without endangering them. Protect the young sensitives by teaching them caution. Perhaps finally see the truth revealed before he dies.",
+      voiceNotes: "Slow, deliberate speech. Heavy regional accent. Pauses meaningfully. Often starts sentences with 'My grandfather used to say...'",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 1",
+      keyTraits: ["wise", "mysterious", "protective", "storyteller"],
+      significance: "Source of oral tradition, connects Pedro to historical knowledge",
+      companion: "Rex the dog - loyal companion who senses danger",
+    },
+  },
+  {
+    name: "Rex (Old Man Santos' Dog)",
+    summary: "A loyal mixed-breed dog who accompanies Old Man Santos. As a member of the canis family, Rex is NOT part of the alien network and serves as a protector.",
+    character: {
+      fullName: "Rex",
+      age: "9 years (senior dog)",
+      role: "supporting",
+      occupation: "companion and guardian",
+      personality: "Alert, protective, gentle with friends but growls at insects behaving strangely. Has an uncanny ability to sense danger before it happens.",
+      appearance: "Medium-sized mixed breed with gray muzzle showing age. Brown and white fur. Wise, knowing eyes. Slight limp from an old injury.",
+      backstory: "Found as a stray by Santos after the dog seemed to save him from a swarm of bees years ago. Has been his constant companion since. Seems to understand more than a normal dog should.",
+      motivation: "Protect Santos and anyone Santos trusts. Alert to threats from the alien network.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 1",
+      species: "dog (canis familiaris)",
+      keyTraits: ["loyal", "protective", "perceptive", "trustworthy"],
+      significance: "Represents the safety of dogs, demonstrates they sense alien activity",
+    },
+  },
+  {
+    name: "Nicole's Aunt (Kathrine's Mother) - Beatriz Garcia",
+    summary: "Kathrine's frustrated mother who sends her daughter to stay with Nicole, hoping exposure to hard work will cure her 'delusions' about hearing insects.",
+    character: {
+      fullName: "Beatriz Garcia",
+      age: "late 40s",
+      pronouns: "she/her",
+      role: "supporting",
+      occupation: "accountant",
+      personality: "Practical to a fault. Dismissive of anything that can't be measured. Frustrated with Kathrine's struggles in school and her 'crazy talk' about insects. Deep down, terrified that Kathrine inherited her father's 'condition'.",
+      appearance: "Stern face, glasses, professional attire. Resembles an older, more tired version of Kathrine.",
+      backstory: "Her father (Kathrine's grandfather) died under mysterious circumstances after claiming he could hear 'rat whispers' in his archaeology lab. She's spent her life in denial, convincing herself it was mental illness.",
+      motivation: "Protect Kathrine from the same 'madness' that took her father. Force her daughter into practical reality through tough love.",
+      voiceNotes: "Sharp, impatient tone. Cuts people off. Uses phrases like 'That's enough of this nonsense' and 'Focus on what's real.'",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 2 (mentioned)",
+      keyTraits: ["dismissive", "practical", "secretly afraid", "in denial"],
+      significance: "Represents generational trauma and denial of the phenomenon",
+    },
+  },
+  {
+    name: "Kathrine's Grandfather (Deceased) - Erik Hiamertas",
+    summary: "Norwegian archaeologist who studied a meteorite fragment and developed the ability to hear 'rat whispers'. Died under mysterious circumstances. Left behind crucial research.",
+    character: {
+      fullName: "Dr. Erik Hiamertas",
+      age: "67 at death (10 years ago)",
+      pronouns: "he/him",
+      role: "backstory",
+      occupation: "archaeologist and researcher",
+      personality: "Was brilliant, curious, and obsessive about his research. Became increasingly paranoid in his final years. Documented everything meticulously.",
+      appearance: "Tall, thin, wild gray hair. Thick glasses. Lab coat always stained with rock dust. Intense, distant gaze.",
+      backstory: "Discovered a meteorite fragment in Norway with unusual properties. After prolonged exposure, began hearing frequencies from rats and insects. Documented his findings but was found dead in his lab - officially ruled a heart attack. Lab was ransacked, most research destroyed.",
+      motivation: "Was driven to understand the phenomenon. Left coded messages for future sensitives.",
+      voiceNotes: "Spoke rapidly when excited. Heavy Norwegian accent. Often muttered in multiple languages.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 2 (mentioned in flashback)",
+      keyTraits: ["brilliant", "paranoid", "thorough", "deceased"],
+      significance: "His research provides scientific backing, his death proves the danger",
+      legacy: "Hidden research notes, meteorite fragment, coded warnings",
+    },
+  },
+  // ==================== ALIEN HIERARCHY ====================
+  {
+    name: "The Bee Queen",
+    summary: "Regional commander of the insect network. Controls bee populations across the continent. Responsible for coordinated attacks disguised as 'killer bee' incidents.",
+    character: {
+      role: "antagonist",
+      occupation: "regional alien commander",
+      personality: "Strategic and patient. Prefers slow, methodical elimination over quick strikes. Coordinates with other regional commanders. Reports to the central consciousness.",
+      appearance: "Unusually large queen bee with distinctive markings. Located deep within a massive hive. Rarely moves but commands millions.",
+      backstory: "One of the original Martian consciousnesses that survived the transfer. Has controlled bee populations for millions of years. Responsible for numerous human deaths attributed to 'allergic reactions' and 'africanized bee attacks'.",
+      motivation: "Maintain control. Eliminate sensitives. Expand hive influence. Report threats to central command.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 4 (mentioned)",
+      species: "bee (Apis mellifera)",
+      keyTraits: ["patient", "strategic", "ancient", "powerful"],
+      significance: "Demonstrates scope of the network beyond spiders",
+    },
+  },
+  {
+    name: "The Rat General",
+    summary: "Urban warfare specialist of the alien network. Commands rat populations in cities worldwide. Master of disease vectors and surveillance.",
+    character: {
+      role: "antagonist",
+      occupation: "urban operations commander",
+      personality: "Cunning, opportunistic, thrives in chaos. Uses disease and fear as weapons. Expert in infiltration and observation.",
+      appearance: "Large brown rat with unusual intelligence in its eyes. Scarred from countless battles. Leads from subway tunnels and sewers.",
+      backstory: "Evolved to prominence during the Black Plague - a coordinated elimination event that killed millions of humans who were developing sensitivity. Has operated in every major city for centuries.",
+      motivation: "Urban control and surveillance. Eliminate threats in populated areas. Spread disease when needed for cover.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 5",
+      species: "rat (Rattus norvegicus)",
+      keyTraits: ["cunning", "ruthless", "disease-master", "urban specialist"],
+      significance: "Major antagonist in urban episodes, controls subway network",
+    },
+  },
+  {
+    name: "The Cat Ambassador",
+    summary: "Spy and infiltrator who lives in human homes. Uses the trust humans place in cats to observe and report. The most insidious of the alien operatives.",
+    character: {
+      role: "antagonist",
+      occupation: "domestic spy and infiltrator",
+      personality: "Aloof, calculating, patient. Maintains the appearance of a normal pet while observing everything. Reports on households with potential sensitives.",
+      appearance: "Beautiful Persian cat with unsettling, too-intelligent eyes. Lives with a wealthy family but reports to the network.",
+      backstory: "Cats were among the first animals integrated into the Martian network. They infiltrated human society early, using their perceived independence to mask their true nature. The Cat Ambassador is an elder who has lived multiple 'cat lives' through consciousness transfer.",
+      motivation: "Observe and report. Identify sensitives before they become threats. Maintain cover at all costs.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 6",
+      species: "cat (Felis catus)",
+      keyTraits: ["deceptive", "patient", "observant", "infiltrator"],
+      significance: "Shows that even beloved pets may be enemies, increases paranoia",
+    },
+  },
+  // ==================== MINOR CHARACTERS ====================
+  {
+    name: "The Photo Shoot Director",
+    summary: "Demanding creative director at the photo shoot where Ricardo works. Unknowingly prevents Ricardo from answering Angela's calls.",
+    character: {
+      fullName: "Marcus Webb",
+      age: "mid-50s",
+      pronouns: "he/him",
+      role: "minor",
+      occupation: "creative director",
+      personality: "Demanding, perfectionist, short-tempered. Values the shot above all else. No patience for personal interruptions during work.",
+      appearance: "Bald head, designer glasses, all-black attire. Always gesturing dramatically.",
+      motivation: "Get the perfect shot. Keep the shoot on schedule. No distractions allowed.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 1",
+      keyTraits: ["demanding", "perfectionist", "oblivious"],
+      significance: "Plot device - prevents Ricardo from saving Angela",
+    },
+  },
+  {
+    name: "Angela's Neighbor (Mrs. Ferreira)",
+    summary: "Elderly neighbor who witnesses hundreds of spiders leaving Angela's apartment the night of her death. Her testimony is dismissed as senility.",
+    character: {
+      fullName: "Dona Carmela Ferreira",
+      age: "78",
+      pronouns: "she/her",
+      role: "minor",
+      occupation: "retired schoolteacher",
+      personality: "Observant, gossipy, largely ignored. Has insomnia and notices things at night. Nobody believes her 'crazy stories'.",
+      appearance: "Small, hunched, wears thick glasses. Always in a nightgown and robe at odd hours.",
+      backstory: "Has lived next to Angela for 20 years. Always thought Angela talked to her plants strangely. Saw the spider exodus but police dismissed her account.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 2",
+      keyTraits: ["observant", "dismissed", "witness"],
+      significance: "Provides evidence that's ignored, shows how truth is suppressed",
+    },
+  },
+  {
+    name: "The News Anchor",
+    summary: "Professional news anchor who reports on Angela's death, presenting it as an unexplained tragedy. Unknowingly spreads the cover story.",
+    character: {
+      fullName: "Fernanda Alves",
+      age: "mid-30s",
+      pronouns: "she/her",
+      role: "minor",
+      occupation: "TV news anchor",
+      personality: "Professional, polished, reads what she's given without question.",
+      appearance: "Perfectly styled hair, professional makeup, designer suit. Always camera-ready.",
+    },
+    media: {},
+    attributes: {
+      firstAppearance: "Episode 2",
+      keyTraits: ["professional", "unwitting"],
+      significance: "Represents media's role in maintaining the cover-up",
+    },
+  },
 ];
 
+// ============================================================================
+// LOCATIONS - Detailed settings with cinematic descriptions
+// ============================================================================
+
 const LOCATIONS = [
+  // ==================== PRIMARY LOCATIONS ====================
   {
     name: "Angela's Apartment",
     type: "LOCATION",
@@ -256,9 +497,125 @@ const LOCATIONS = [
       firstAppearance: "Episode 1",
     },
   },
+  // ==================== SECONDARY LOCATIONS ====================
+  {
+    name: "Pedro's Bedroom",
+    type: "LOCATION",
+    summary: "A teenage boy's sanctuary filled with computers, conspiracy theory posters, and the glow of multiple monitors. The command center of the Reddit resistance, where Pedro orchestrates the community from behind locked doors.",
+    attributes: {
+      locationType: "bedroom",
+      atmosphere: "Intense focus, digital fortress, isolated from the outside world",
+      appearance: "Small room with blackout curtains. Desk covered in monitors, keyboards, tangled cables. Walls covered with printed conspiracy theories, maps with strings connecting locations, printed Reddit threads. Unmade bed in corner. Energy drink cans scattered everywhere. Small window overlooking the street, usually covered.",
+      keyFeatures: "Multi-monitor computer setup, conspiracy wall with red strings, headphones always ready, window he uses to watch for insects, door always locked",
+      lighting: "Blue glow from monitors, LED strips, darkness otherwise. Harsh contrast between screen light and shadows.",
+      significance: "Nerve center of the resistance. Where Pedro moderates the Reddit, connects the dots, and plans the investigation.",
+      firstAppearance: "Episode 1",
+    },
+  },
+  {
+    name: "Nicole's Apartment",
+    type: "LOCATION",
+    summary: "A sleek, modern apartment in an upscale neighborhood reflecting Nicole's successful modeling career. Minimalist, Instagram-perfect, but sterile and lonely. Where Kathrine stays during her visit and where their real friendship begins.",
+    attributes: {
+      locationType: "apartment",
+      atmosphere: "Polished, performative, secretly hollow",
+      appearance: "Open-plan living with floor-to-ceiling windows. White furniture, designer pieces, professional photos of Nicole on walls. State-of-the-art kitchen rarely used. Guest bedroom for Kathrine. Balcony with city views. Everything looks like a magazine spread.",
+      keyFeatures: "Ring light and camera setup for social media, guest bedroom where Kathrine discovers more about her abilities, large TV where they watch the news about Angela, windows overlooking the city (and its pigeons)",
+      lighting: "Natural light during day, carefully designed accent lighting at night. Always camera-ready.",
+      significance: "Where Kathrine and Nicole's superficial relationship becomes real. Where they first discuss the phenomenon together.",
+      firstAppearance: "Episode 2",
+    },
+  },
+  {
+    name: "The Hospital (Night Shift)",
+    type: "LOCATION",
+    summary: "The city's public hospital where Pedro's mother Maria works the night shift. Fluorescent-lit corridors, the smell of antiseptic, and the constant presence of unseen creatures in the walls and vents.",
+    attributes: {
+      locationType: "hospital",
+      atmosphere: "Clinical, exhausting, secretly dangerous",
+      appearance: "Long white corridors with scuffed floors. Nurses' station with monitors and paperwork. Patient rooms with beeping machines. Break room with vending machines and uncomfortable chairs. Basement morgue. Loading docks where rats congregate.",
+      keyFeatures: "Rats in the walls that Maria sometimes notices, cockroaches in the morgue, flies around the cafeteria, vents where insects travel unseen",
+      lighting: "Harsh fluorescent tubes that flicker. Emergency lighting in some areas. Darkness in unused corridors.",
+      significance: "Shows Maria's exhausting life. Location where she might overhear suspicious patterns in patient deaths. Rat surveillance hub.",
+      firstAppearance: "Episode 3",
+    },
+  },
+  {
+    name: "The Cemetery",
+    type: "LOCATION",
+    summary: "Where Angela is buried and where Ricardo goes to grieve and apologize. Ancient trees, weathered headstones, and the constant presence of crows watching from above.",
+    attributes: {
+      locationType: "cemetery",
+      atmosphere: "Somber, peaceful on surface, surveillance from above",
+      appearance: "Old cemetery with mix of new and ancient graves. Large oak trees. Stone pathways. Fresh flowers on some graves, neglected others. Chapel in the corner. Iron fence around perimeter. Crows always present in the trees.",
+      keyFeatures: "Angela's fresh grave, Ricardo's bench where he talks to her, crows that report on visitors, ants processing through the grass",
+      lighting: "Dappled sunlight through trees, overcast skies during emotional scenes, sunset during Ricardo's visits.",
+      significance: "Ricardo's emotional anchor. Where he processes guilt and makes promises to uncover the truth.",
+      firstAppearance: "Episode 3",
+    },
+  },
+  {
+    name: "The Old Archaeology Lab (Norway - Flashback)",
+    type: "LOCATION",
+    summary: "Dr. Erik Hiamertas's laboratory in Norway where he studied the meteorite fragment. Now abandoned and ransacked, it holds secrets in its ruins.",
+    attributes: {
+      locationType: "laboratory",
+      atmosphere: "Once brilliant, now ominous and destroyed",
+      appearance: "Stone building in Norwegian countryside. Large windows for natural light (now broken). Rock samples and analysis equipment (now scattered and smashed). Filing cabinets (now empty). Chalk boards with equations (partially erased). Hidden safe behind a bookshelf.",
+      keyFeatures: "Smashed meteorite analysis equipment, hidden floor safe Kathrine doesn't know about, coded notes left in book margins, rats' nests in the walls",
+      lighting: "Gray Norwegian light, dust particles in the air, flashlight beams in later scenes.",
+      significance: "Source of Kathrine's grandfather's discovery. May contain hidden research. Scene of his murder.",
+      firstAppearance: "Episode 4 (flashback)",
+    },
+  },
+  {
+    name: "The Underground Tunnel Network",
+    type: "LOCATION",
+    summary: "The subway tunnels, maintenance corridors, and sewer systems that form the Rat General's domain. A hidden world beneath the city where the alien network operates freely.",
+    attributes: {
+      locationType: "underground",
+      atmosphere: "Claustrophobic, dangerous, the aliens' territory",
+      appearance: "Dark tunnels with dripping water. Subway tracks with the third rail's danger. Maintenance corridors with exposed pipes. Sewer junctions with rushing water. Rat colonies in every corner. Cockroaches covering walls in places.",
+      keyFeatures: "Subway platforms, maintenance access points, sewer grates, rat highways, cable runs where insects travel, abandoned stations",
+      lighting: "Near darkness. Emergency lights at intervals. Train lights passing through. Flashlight required.",
+      significance: "The aliens' main urban infrastructure. Where the Rat General commands. Dangerous territory for protagonists.",
+      firstAppearance: "Episode 5",
+    },
+  },
+  {
+    name: "The Coffee Shop (Safe Meeting Point)",
+    type: "LOCATION",
+    summary: "A carefully chosen coffee shop where the protagonists can meet. Selected because it has minimal plants, aggressive pest control, and a resident dog that belongs to the owner.",
+    attributes: {
+      locationType: "cafe",
+      atmosphere: "Deliberately sterile, uncomfortably safe",
+      appearance: "Modern minimalist design with no plants. Bright lighting with no dark corners. Clean surfaces. The owner's golden retriever sleeps by the counter. Ultrasonic pest devices visible. Large windows on all sides.",
+      keyFeatures: "Owner's dog that senses threats, no plants or hiding spots for insects, ultrasonic pest deterrents, large visible space with no hidden areas, their usual corner table",
+      lighting: "Bright, even lighting. No shadows. Large windows letting in daylight.",
+      significance: "The group's safe meeting spot. Where they can talk freely (relatively). Shows their growing paranoia and protocols.",
+      firstAppearance: "Episode 4",
+    },
+  },
+  {
+    name: "Ricardo's Editing Suite",
+    type: "LOCATION",
+    summary: "Ricardo's home office filled with professional video and audio equipment. Where he reviews footage and eventually analyzes audio recordings for hidden frequencies.",
+    attributes: {
+      locationType: "home office",
+      atmosphere: "Professional, technological, increasingly obsessive",
+      appearance: "Soundproofed room with acoustic panels. Multiple monitors for editing. Professional speakers and headphones. Camera equipment on shelves. Hard drives stacked everywhere. Angela's voice message plays on loop on one screen.",
+      keyFeatures: "Audio analysis software, professional microphones, Angela's final voicemail file, waveform displays showing unusual frequencies, religious artifacts from his diverse upbringing",
+      lighting: "Monitor glow, adjustable desk lamps, blackout conditions for color grading.",
+      significance: "Where Ricardo becomes a researcher. Where he first detects alien frequencies in recordings. His obsession space.",
+      firstAppearance: "Episode 3",
+    },
+  },
 ];
 
-// LORE - World-building rules and history
+// ============================================================================
+// LORE - World-building mythology and history
+// ============================================================================
+
 const LORE_ENTRIES = [
   {
     name: "The Martian Origin",
@@ -419,6 +776,59 @@ const ITEMS = [
     },
   },
   {
+    name: "Angela's Voicemail",
+    type: "ITEM",
+    summary: "The last message Angela left for Ricardo before her death. Contains her frightened words about the spiders - and hidden beneath the audio, alien communication frequencies.",
+    attributes: {
+      format: "Digital audio file, backed up on Ricardo's drives",
+      content: "Angela's worried voice describing strange behavior from spiders. Background contains inaudible (to normal hearing) alien frequencies discussing her fate.",
+      significance: "The Rosetta Stone of the investigation. Contains proof of alien communication. Ricardo's obsession object.",
+      status: "Partially corrupted by alien sabotage, but fragments remain",
+    },
+  },
+  {
+    name: "The Conspiracy Wall",
+    type: "ITEM",
+    summary: "Pedro's bedroom wall covered in printed articles, photos, and red strings connecting theories. A physical manifestation of his research and growing understanding.",
+    attributes: {
+      contents: ["News clippings about unexplained deaths", "Historical plague maps", "UFO sighting locations", "Reddit thread printouts", "Photos of insects from around the world"],
+      significance: "Shows Pedro's pattern-recognition abilities. Becomes increasingly accurate as the story progresses.",
+      symbolism: "Chaos becoming order, conspiracy becoming truth",
+    },
+  },
+  {
+    name: "Old Man Santos's Cane",
+    type: "ITEM",
+    summary: "A worn wooden cane that Santos has carried for decades. Carved with symbols that might be warnings or protection sigils from old traditions.",
+    attributes: {
+      appearance: "Dark wood, worn smooth from decades of use. Subtle carvings along the shaft that most dismiss as decoration.",
+      history: "Passed down from Santos's grandfather, who was also a 'sensitive'. The carvings are warnings in a forgotten code.",
+      significance: "Contains hidden knowledge. May be decoded later in the story.",
+    },
+  },
+  {
+    name: "Nicole's Social Media Accounts",
+    type: "ITEM",
+    summary: "Nicole's extensive social media presence becomes an unexpected weapon - a way to spread coded warnings to the public without alerting the alien network.",
+    attributes: {
+      platforms: ["Instagram", "TikTok", "YouTube"],
+      followers: "Over 2 million combined",
+      significance: "Becomes the resistance's broadcast system. Nicole embeds warnings in fashion posts using coded language.",
+      risk: "If discovered, would expose Nicole and the entire network.",
+    },
+  },
+  {
+    name: "The Hidden Safe (Norway Lab)",
+    type: "ITEM",
+    summary: "A floor safe hidden in Kathrine's grandfather's laboratory, containing his most important research. Its location was never disclosed; it may still hold the key to fighting back.",
+    attributes: {
+      contents: "Unknown - possibly original meteorite fragment, research notes, decoded alien communications, emergency protocols",
+      location: "Beneath floorboards in the destroyed Norway lab, behind a false wall",
+      significance: "Potential game-changer if found. Grandfather's last gift to future sensitives.",
+      status: "Undiscovered, possibly still intact",
+    },
+  },
+  {
     name: "Meteorite Fragment",
     type: "ITEM",
     summary: "A fragment of the Oumuamua-like meteorite studied by Kathrine's grandfather. Contains traces of the original Martian biological material. Its existence hints at the scientific proof of alien origin.",
@@ -430,6 +840,88 @@ const ITEMS = [
     },
   },
 ];
+
+// ============================================================================
+// ADDITIONAL LORE - Extended mythology
+// ============================================================================
+
+const ADDITIONAL_LORE = [
+  {
+    name: "The Black Plague Connection",
+    type: "LORE",
+    summary: "The Black Death of 1347-1351 was not a natural pandemic. It was a coordinated elimination event targeting European populations who had begun developing sensitivity to alien frequencies due to exposure to traded goods containing meteorite fragments.",
+    attributes: {
+      category: "historical event",
+      timeframe: "1347-1351 CE",
+      officialStory: "Bubonic plague spread by fleas on rats",
+      truth: "The Rat General coordinated the largest mass elimination in human history. 75-200 million dead, mostly sensitives.",
+      evidence: ["Unusual death patterns in records", "Survivors often from families with no sensitivity", "Simultaneous outbreak across vast distances"],
+      modernRelevance: "Establishes the Rat General as ancient and dangerous. Shows aliens can orchestrate global events.",
+    },
+  },
+  {
+    name: "The Telomerase Secret",
+    type: "LORE",
+    summary: "Certain alien commanders have lived for thousands of years through biological manipulation of telomerase - the enzyme that controls cellular aging. This is why 'The Elders' among insects and animals can maintain consciousness across millennia.",
+    attributes: {
+      category: "science",
+      mechanism: "Alien biology includes enhanced telomerase production, allowing indefinite cell division without degradation",
+      implications: ["Some alien commanders are original Martian consciousnesses", "They have witnessed all of human history", "Their patience is inhuman because their lifespan is inhuman"],
+      scientificBasis: "Based on real telomerase research and lobster/hydra biological immortality studies",
+    },
+  },
+  {
+    name: "The Two Unknown Elements",
+    type: "LORE",
+    summary: "The alien technology is based on two elements from the periodic table that humanity has not yet discovered. These elements allow weather manipulation, frequency-based communication, and other seemingly impossible feats.",
+    attributes: {
+      category: "science",
+      properties: [
+        "Element X: Allows frequency manipulation across biological systems",
+        "Element Y: Enables weather control through atmospheric ionization",
+      ],
+      source: "Mined by ants from deep underground deposits, distributed through the alien network",
+      significance: "Explains 'impossible' alien abilities while maintaining scientific plausibility",
+      discovery: "May be discovered by humans in later seasons, changing the balance of power",
+    },
+  },
+  {
+    name: "The Frequency Spectrum",
+    type: "LORE",
+    summary: "Alien communication occurs on frequencies just beyond normal human hearing (22-100 kHz). Sensitives develop the ability to perceive these frequencies, usually starting with the lowest ranges and expanding with exposure.",
+    attributes: {
+      category: "mechanism",
+      frequencyRanges: {
+        basic: "22-30 kHz (insect chatter, detected first)",
+        intermediate: "30-50 kHz (animal communication)",
+        advanced: "50-80 kHz (commander level)",
+        elder: "80-100 kHz (ancient consciousness, extremely rare to hear)",
+      },
+      triggers: ["Genetic predisposition", "Meteorite exposure", "Near-death experience", "Neurodivergence"],
+      scientificBasis: "Based on real ultrasonic research and bat/dolphin echolocation studies",
+    },
+  },
+  {
+    name: "Real World Connections",
+    type: "LORE",
+    summary: "Throughout the series, unexplained real-world events are connected to alien activity. This grounds the horror in reality and makes viewers question what's really happening.",
+    attributes: {
+      category: "meta",
+      connectedEvents: [
+        { event: "Colony Collapse Disorder (bees disappearing)", explanation: "Strategic repositioning of bee forces" },
+        { event: "Unexplained bird die-offs", explanation: "Internal conflict or targeted eliminations" },
+        { event: "Havana Syndrome", explanation: "Frequency weapon testing" },
+        { event: "COVID-19 pandemic", explanation: "Natural event exploited for cover operations" },
+        { event: "Killer bee spread in Americas", explanation: "Bee Queen expanding territory" },
+      ],
+      purpose: "Every unexplained news story becomes potential evidence. Viewers start seeing the world differently.",
+    },
+  },
+];
+
+// ============================================================================
+// EPISODES - Complete Season 1 with cinematic detail
+// ============================================================================
 
 const EPISODES_SEASON_1 = [
   {
@@ -537,6 +1029,270 @@ const EPISODES_SEASON_1 = [
     cliffhanger: "Kathrine and Pedro connect over shared experiences of hearing insects. Ricardo discovers Angela's apartment is completely clear of spiders - no evidence.",
     foreshadowing: ["Reddit community warnings about staying silent near insects", "Connection between all the protagonists forming", "The aliens' ability to coordinate and eliminate threats"],
     payoffs: ["Angela's call to Ricardo", "Elder stories Pedro heard"],
+  },
+  {
+    chapterNumber: 3,
+    title: "Episode 3 — The Voicemail",
+    synopsis: "Ricardo obsessively analyzes Angela's voicemail, discovering strange background frequencies. Pedro and Kathrine share their first video call, comparing notes about what they've heard. Nicole begins to take Kathrine's stories seriously. Ricardo visits Angela's grave and makes a promise.",
+    timelineOrder: 3,
+    scenes: [
+      {
+        sceneId: "s1e3_opening",
+        title: "Ricardo's Obsession",
+        synopsis: "Ricardo plays Angela's voicemail over and over in his editing suite. Using audio software, he isolates background sounds and discovers strange frequencies beneath the static - frequencies that shouldn't exist.",
+        participants: ["Ricardo"],
+        location: "Ricardo's Editing Suite",
+        keyEvents: ["Voicemail analysis", "Discovery of hidden frequencies", "Ricardo's guilt manifests as obsession"],
+        cinematicDetails: {
+          openingShot: "Close-up of waveform on monitor, irregular patterns pulsing",
+          mood: "Obsessive, grief-driven, technological",
+          sounds: "Angela's voice looping, software clicks, Ricardo's frustrated sighs",
+          visualMotif: "Waveforms that look almost like communication patterns",
+        },
+      },
+      {
+        sceneId: "s1e3_videocall",
+        title: "First Connection",
+        synopsis: "Pedro and Kathrine have their first video call. She's at Nicole's apartment; he's in his bedroom. They compare experiences - the voices, the patterns, the fear. Pedro shows her the Reddit community's warnings.",
+        participants: ["Pedro", "Kathrine"],
+        location: "Pedro's Bedroom / Nicole's Apartment",
+        keyEvents: ["First real-time connection", "Sharing of experiences", "Discussion of community rules", "Trust begins forming"],
+        cinematicDetails: {
+          openingShot: "Split screen showing both in their spaces, screens glowing in darkness",
+          mood: "Nervous, hopeful, conspiratorial",
+          sounds: "Video call quality audio, typing, distant city sounds",
+          visualMotif: "Two screens in the night, isolated people finding connection",
+        },
+      },
+      {
+        sceneId: "s1e3_nicole_listens",
+        title: "Nicole's Shift",
+        synopsis: "After the call, Kathrine tells Nicole everything. Nicole is skeptical but remembers Ricardo's devastation about Angela. She agrees to ask Ricardo about the voice message - just to humor Kathrine.",
+        participants: ["Nicole", "Kathrine"],
+        location: "Nicole's Apartment",
+        keyEvents: ["Kathrine's confession", "Nicole's skepticism wavering", "Decision to contact Ricardo"],
+        cinematicDetails: {
+          openingShot: "Two women on designer couch, city lights through windows, pigeon on balcony watching",
+          mood: "Intimate, tense, shifting allegiances",
+          sounds: "City ambience, distant traffic, pigeon cooing ominously",
+          visualMotif: "Pigeon silhouette watching through glass",
+        },
+      },
+      {
+        sceneId: "s1e3_cemetery",
+        title: "Angela's Grave",
+        synopsis: "Ricardo visits Angela's grave. He speaks to her headstone, apologizing for not answering. He promises to find out what happened. As he leaves, we see crows in the trees watching, and one flies away - reporting.",
+        participants: ["Ricardo"],
+        location: "The Cemetery",
+        keyEvents: ["Ricardo's promise", "Emotional catharsis", "Crows observing and reporting"],
+        cinematicDetails: {
+          openingShot: "Wide shot of cemetery at golden hour, Ricardo small among the headstones",
+          mood: "Somber, determined, being watched",
+          sounds: "Wind in trees, distant church bells, crow caws",
+          visualMotif: "Crows silhouetted against sky, flying away at episode end",
+        },
+      },
+      {
+        sceneId: "s1e3_mother",
+        title: "Maria's Concern",
+        synopsis: "Pedro's mother Maria comes home from night shift exhausted. She notices Pedro hasn't slept. She worries about his 'internet obsession' but is too tired to fight. Before sleeping, she pauses at a photo of Pedro's father.",
+        participants: ["Pedro", "Pedro's Mother (Maria Martinez)"],
+        location: "Pedro's Home",
+        keyEvents: ["Mother-son tension", "Maria's exhaustion", "Hint at father's mysterious death"],
+        cinematicDetails: {
+          openingShot: "Maria entering dark apartment in scrubs, Pedro's monitor light visible under his door",
+          mood: "Exhausted, worried, domestic tension",
+          sounds: "Keys in lock, tired footsteps, distant keyboard clacking from Pedro's room",
+          visualMotif: "Photo of father on wall, never fully shown",
+        },
+      },
+    ],
+    dramaticBeats: [
+      { beat: "Opening Hook", description: "Strange frequencies in Angela's voicemail" },
+      { beat: "Connection", description: "Pedro and Kathrine's video call creates alliance" },
+      { beat: "Shift", description: "Nicole begins to believe" },
+      { beat: "Emotional Core", description: "Ricardo's cemetery promise" },
+      { beat: "Cliffhanger", description: "Crows report Ricardo's activities" },
+    ],
+    cliffhanger: "The alien network becomes aware that Ricardo is investigating. The crows report to a higher command. Meanwhile, Nicole agrees to connect Kathrine with Ricardo.",
+    foreshadowing: ["Frequencies in recordings hint at communication method", "Maria's exhaustion sets up hospital scenes", "Photo of Pedro's father"],
+    payoffs: ["Ricardo processing Angela's death", "Reddit community connects its first members"],
+  },
+  {
+    chapterNumber: 4,
+    title: "Episode 4 — The First Meeting",
+    synopsis: "The core group meets for the first time at the coffee shop. Ricardo brings audio analysis of the frequencies. Kathrine shares her grandfather's stories. Pedro shares his research on historical incidents. They establish protocols for safe communication.",
+    timelineOrder: 4,
+    scenes: [
+      {
+        sceneId: "s1e4_gathering",
+        title: "Strangers in the Safe Zone",
+        synopsis: "Pedro, Kathrine, and Nicole arrive at the coffee shop separately, checking for surveillance. The owner's golden retriever greets them. They take the corner table away from windows.",
+        participants: ["Pedro", "Kathrine", "Nicole"],
+        location: "The Coffee Shop (Safe Meeting Point)",
+        keyEvents: ["First physical meeting", "Establishing safe location", "Nervous introductions"],
+        cinematicDetails: {
+          openingShot: "Exterior of coffee shop, Pedro entering while checking surroundings paranoidly",
+          mood: "Tense, paranoid, hopeful",
+          sounds: "Coffee shop ambient, dog panting, nervous small talk",
+          visualMotif: "Golden retriever that seems to approve of each arrival",
+        },
+      },
+      {
+        sceneId: "s1e4_ricardo_arrives",
+        title: "Ricardo's Evidence",
+        synopsis: "Ricardo arrives late, carrying equipment. He plays the isolated audio frequencies on headphones for each of them. Their faces confirm - they recognize the sound. They've all heard it.",
+        participants: ["Ricardo", "Pedro", "Kathrine", "Nicole"],
+        location: "The Coffee Shop (Safe Meeting Point)",
+        keyEvents: ["Frequency playback", "Shared recognition", "Group validation", "Ricardo joins the resistance"],
+        cinematicDetails: {
+          openingShot: "Ricardo entering with equipment bag, others watching nervously",
+          mood: "Revelatory, validating, frightening",
+          sounds: "Alien frequency through headphones (audience hears it for first time clearly)",
+          visualMotif: "Close-ups of each face as they recognize the sound",
+        },
+      },
+      {
+        sceneId: "s1e4_flashback",
+        title: "Kathrine's Inheritance",
+        synopsis: "Kathrine shares what she knows about her grandfather - his lab, his research, his death. Flashback to young Kathrine listening to her grandfather speak of 'rat whispers'. She has old photos on her phone.",
+        participants: ["Kathrine"],
+        location: "The Coffee Shop (flashback to Norway)",
+        keyEvents: ["Grandfather's story revealed", "Meteorite connection mentioned", "Scientific basis established"],
+        cinematicDetails: {
+          openingShot: "Kathrine's phone showing old photo of grandfather in lab",
+          mood: "Nostalgic, sad, revelatory",
+          sounds: "Memory echo, grandfather's accented voice in flashback",
+          visualMotif: "Norway lab in warm memory tones, contrasting with cold present",
+        },
+      },
+      {
+        sceneId: "s1e4_pedro_research",
+        title: "Pattern Recognition",
+        synopsis: "Pedro shares his research - historical incidents that match the pattern. The Black Plague. Unexplained mass deaths. 'Killer bee' attacks. Disease outbreaks after UFO sightings. All connected.",
+        participants: ["Pedro"],
+        location: "The Coffee Shop (Safe Meeting Point)",
+        keyEvents: ["Historical pattern revealed", "Scope of threat becomes clear", "Pedro's brilliance demonstrated"],
+        cinematicDetails: {
+          openingShot: "Pedro's phone showing compiled documents, scrolling through evidence",
+          mood: "Academic, horrifying, overwhelming",
+          sounds: "His rapid-fire explanation, keyboard sounds as he pulls up more data",
+          visualMotif: "Montage of historical images - plague, bee attacks, unexplained deaths",
+        },
+      },
+      {
+        sceneId: "s1e4_protocols",
+        title: "Rules of Survival",
+        synopsis: "They establish communication protocols. Never speak near insects. Only trust dogs. Use coded language. Never meet in the same place twice. As they leave separately, we see a fly that landed during the meeting - it didn't move once.",
+        participants: ["Ricardo", "Pedro", "Kathrine", "Nicole"],
+        location: "The Coffee Shop (Safe Meeting Point)",
+        keyEvents: ["Protocols established", "Group formed", "Unknown surveillance revealed"],
+        cinematicDetails: {
+          openingShot: "Group leaning in close, speaking quietly",
+          mood: "Conspiratorial, organized, falsely secure",
+          sounds: "Whispered planning, coffee shop ambience, dog growling softly at something",
+          visualMotif: "Fly on ceiling that audience notices before characters do",
+        },
+      },
+    ],
+    dramaticBeats: [
+      { beat: "Opening Hook", description: "Paranoid arrival at safe location" },
+      { beat: "Revelation", description: "They all recognize the frequency" },
+      { beat: "Backstory", description: "Grandfather's research revealed" },
+      { beat: "Scope", description: "Historical pattern established" },
+      { beat: "Cliffhanger", description: "The fly was listening" },
+    ],
+    cliffhanger: "The fly that landed during their meeting was recording everything. Their 'safe' location has been compromised. The network now knows they're organizing.",
+    foreshadowing: ["Dog growled at something unseen", "Grandfather's hidden research mentioned", "Their protocols have a fatal flaw"],
+    payoffs: ["Ricardo's audio analysis pays off", "Pedro's historical research validated", "Kathrine's family history matters"],
+  },
+  {
+    chapterNumber: 5,
+    title: "Episode 5 — The Warning",
+    synopsis: "The alien network responds. Strange incidents begin happening to each member. Ricardo's equipment malfunctions. Kathrine sees ants forming patterns in Nicole's kitchen. Pedro's mother reports a strange patient death at the hospital. Old Man Santos delivers a cryptic warning.",
+    timelineOrder: 5,
+    scenes: [
+      {
+        sceneId: "s1e5_ricardo_gear",
+        title: "Equipment Failure",
+        synopsis: "Ricardo's editing suite has been invaded by small insects. His equipment malfunctions in ways that shouldn't be possible. Corrupted files. Strange static. He realizes he's being targeted.",
+        participants: ["Ricardo"],
+        location: "Ricardo's Editing Suite",
+        keyEvents: ["Equipment sabotage", "Ricardo realizes he's a target", "Angela's voicemail file is corrupted"],
+        cinematicDetails: {
+          openingShot: "Ricardo entering suite, something feels wrong",
+          mood: "Paranoid, violated, technological horror",
+          sounds: "Static, error sounds, distant insect buzzing from vents",
+          visualMotif: "Tiny insects in keyboard gaps, behind monitor",
+        },
+      },
+      {
+        sceneId: "s1e5_ants",
+        title: "The Ant Message",
+        synopsis: "Kathrine wakes at Nicole's apartment to find ants in the kitchen forming a pattern on the counter. For a terrifying moment, the pattern looks like words. Nicole dismisses it, but Kathrine knows: it's a warning.",
+        participants: ["Kathrine", "Nicole"],
+        location: "Nicole's Apartment",
+        keyEvents: ["Ant pattern discovered", "Kathrine's fear confirmed", "Nicole's skepticism crumbles"],
+        cinematicDetails: {
+          openingShot: "Kathrine in kitchen, morning light, freeze when she sees counter",
+          mood: "Horror, domestic invasion, undeniable proof",
+          sounds: "Morning ambient, gasp, Nicole's footsteps running in",
+          visualMotif: "Ants forming shape that might be letters, dispersing before clear",
+        },
+      },
+      {
+        sceneId: "s1e5_hospital",
+        title: "Suspicious Death",
+        synopsis: "At the hospital, Maria tells Pedro about a strange patient death - an elderly man who claimed insects were following him before he died of 'heart failure'. Rats were found in his room.",
+        participants: ["Pedro", "Pedro's Mother (Maria Martinez)"],
+        location: "Pedro's Home",
+        keyEvents: ["Hospital death reported", "Pattern matches Angela's death", "Maria unknowingly provides intel"],
+        cinematicDetails: {
+          openingShot: "Maria exhausted at breakfast table, sharing work stories",
+          mood: "Casual horror, domestic backdrop to terrible news",
+          sounds: "Breakfast sounds, Maria's tired voice, Pedro's sharp intake of breath",
+          visualMotif: "Pedro's hands freezing on cereal spoon as he realizes",
+        },
+      },
+      {
+        sceneId: "s1e5_santos",
+        title: "The Elder's Warning",
+        synopsis: "Pedro visits Old Man Santos in the park. Santos speaks in riddles but the message is clear: they've noticed Pedro. They always find those who listen. His sister tried to fight them too. Rex growls at nothing in the bushes.",
+        participants: ["Pedro", "Old Man Santos", "Rex (Old Man Santos' Dog)"],
+        location: "The Park",
+        keyEvents: ["Direct warning delivered", "Santos's backstory hint", "Rex senses danger"],
+        cinematicDetails: {
+          openingShot: "Pedro approaching Santos on his usual bench, Rex alert",
+          mood: "Ominous, wise, protective",
+          sounds: "Park ambient, Santos's slow voice, Rex's growl",
+          visualMotif: "Santos's eyes looking past Pedro at threats he can't see",
+        },
+      },
+      {
+        sceneId: "s1e5_subway",
+        title: "Eyes Everywhere",
+        synopsis: "Ricardo takes the subway home after discovering his equipment sabotage. He notices rats on the tracks watching him. Too many rats. All facing his platform. The train arrives just as they start climbing toward him.",
+        participants: ["Ricardo"],
+        location: "The Subway",
+        keyEvents: ["Rat surveillance revealed", "Ricardo's first direct threat", "Escape on train"],
+        cinematicDetails: {
+          openingShot: "Ricardo on platform, distracted, then freezing as he sees the tracks",
+          mood: "Building dread, claustrophobic, race against time",
+          sounds: "Subway ambient, growing squeaking, train approaching",
+          visualMotif: "Rats turning to look in unison, reflected in Ricardo's horrified eyes",
+        },
+      },
+    ],
+    dramaticBeats: [
+      { beat: "Escalation", description: "Each member experiences targeted incident" },
+      { beat: "Proof", description: "The ant pattern - undeniable communication" },
+      { beat: "Pattern", description: "Hospital death matches Angela's" },
+      { beat: "Wisdom", description: "Santos's warning from experience" },
+      { beat: "Direct Threat", description: "Rats threaten Ricardo physically" },
+    ],
+    cliffhanger: "The network is closing in. Each member has been warned in their own way. The Rat General has been dispatched to handle the situation. In the subway tunnels, rats gather in unprecedented numbers.",
+    foreshadowing: ["Hospital as danger zone", "Santos's dead sister", "Rat General's territory introduced"],
+    payoffs: ["Coffee shop surveillance discovered through retaliation", "Nicole finally believes completely"],
   },
 ];
 
@@ -670,6 +1426,27 @@ async function seedTCHStory() {
       console.log(`  ✓ Created: ${faction.name}`);
     }
 
+    console.log("\n📜 Creating Additional Lore...");
+    for (const lore of ADDITIONAL_LORE) {
+      const entity = {
+        tenantId,
+        projectId,
+        type: lore.type,
+        name: lore.name,
+        summary: lore.summary,
+        attributes: lore.attributes,
+        relationships: [],
+        version: { status: "DRAFT", number: 1 },
+        audit: {
+          createdBy: userId,
+          updatedBy: userId,
+          updatedAt: new Date(),
+        },
+      };
+      await entitiesCol.insertOne(entity);
+      console.log(`  ✓ Created: ${lore.name}`);
+    }
+
     console.log("\n🔮 Creating Items...");
     for (const item of ITEMS) {
       const entity = {
@@ -786,13 +1563,15 @@ async function seedTCHStory() {
     console.log(`\n📊 Summary:`);
     console.log(`  - ${CHARACTERS.length} characters created`);
     console.log(`  - ${LOCATIONS.length} locations created`);
-    console.log(`  - ${LORE_ENTRIES.length} lore entries created`);
+    console.log(`  - ${LORE_ENTRIES.length + ADDITIONAL_LORE.length} lore entries created`);
     console.log(`  - ${RULES.length} rules created`);
     console.log(`  - ${FACTIONS.length} factions created`);
     console.log(`  - ${ITEMS.length} items created`);
     console.log(`  - ${EPISODES_SEASON_1.length} episodes created`);
     console.log(`  - ${EPISODES_SEASON_1.reduce((sum, ep) => sum + ep.scenes.length, 0)} scenes created`);
-    console.log(`\n📦 Total entities: ${CHARACTERS.length + LOCATIONS.length + LORE_ENTRIES.length + RULES.length + FACTIONS.length + ITEMS.length}`);
+    const totalEntities = CHARACTERS.length + LOCATIONS.length + LORE_ENTRIES.length + ADDITIONAL_LORE.length + RULES.length + FACTIONS.length + ITEMS.length;
+    console.log(`\n📦 Total entities: ${totalEntities}`);
+    console.log(`\n🎬 Total story content: ${EPISODES_SEASON_1.length} episodes, ${EPISODES_SEASON_1.reduce((sum, ep) => sum + ep.scenes.length, 0)} scenes`);
 
   } catch (error) {
     console.error("Error seeding TCH story:", error);
