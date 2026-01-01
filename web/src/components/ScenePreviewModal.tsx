@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Icon, type IconName } from "@/lib/ui";
-import type { StoryNode, StoryNodeCinematicSettings } from "@/lib/models";
+import type { StoryNode, StoryNodeCinematicSettings, SceneVersion } from "@/lib/models";
 import { IconOption } from "@/components/GlassCard";
 import {
   MOOD_OPTIONS,
@@ -104,14 +104,20 @@ export function ScenePreviewModal({
   const [selectedConflict, setSelectedConflict] = useState<string>("");
   const [selectedTurn, setSelectedTurn] = useState<string>("");
   
+  // Get active version
+  const activeVersion = node.versionHistory?.versions.find(
+    v => v.versionNumber === node.versionHistory?.activeVersionNumber
+  );
+
+  // Use version data if available, fallback to node-level data
   const [editedNode, setEditedNode] = useState<Partial<StoryNode>>({
-    title: node.title,
-    synopsis: node.synopsis,
-    goals: { ...node.goals },
-    hooks: { ...node.hooks },
+    title: activeVersion?.title || node.title,
+    synopsis: activeVersion?.synopsis || node.synopsis,
+    goals: activeVersion?.goals ? { ...activeVersion.goals } : { ...node.goals },
+    hooks: activeVersion?.hooks ? { ...activeVersion.hooks } : { ...node.hooks },
   });
   const [editedSettings, setEditedSettings] = useState<StoryNodeCinematicSettings>(
-    node.cinematicSettings || {}
+    activeVersion?.cinematicSettings || node.cinematicSettings || {}
   );
   const [activeSection, setActiveSection] = useState<'overview' | 'cinematic' | 'prompt'>('overview');
   const [hasChanges, setHasChanges] = useState(false);
@@ -157,55 +163,92 @@ export function ScenePreviewModal({
   
   const livePromptParts = buildLivePrompt();
 
-  // Initialize selections from node data
+  // Initialize selections from active version data (or node-level fallback)
   useEffect(() => {
+    const currentVersion = node.versionHistory?.versions.find(
+      v => v.versionNumber === node.versionHistory?.activeVersionNumber
+    );
+    
+    // Prioritize version data, fallback to node-level
+    const title = currentVersion?.title || node.title;
+    const synopsis = currentVersion?.synopsis || node.synopsis || '';
+    const goals = currentVersion?.goals || node.goals;
+    const hooks = currentVersion?.hooks || node.hooks;
+    const settings = currentVersion?.cinematicSettings || node.cinematicSettings || {};
+    
     setEditedNode({
-      title: node.title,
-      synopsis: node.synopsis || '',
+      title,
+      synopsis,
       goals: { 
-        dramaticGoal: node.goals?.dramaticGoal || '',
-        conflict: node.goals?.conflict || '',
-        turn: node.goals?.turn || '',
+        dramaticGoal: goals?.dramaticGoal || '',
+        conflict: goals?.conflict || '',
+        turn: goals?.turn || '',
       },
       hooks: { 
-        hook: node.hooks?.hook || '',
-        foreshadow: node.hooks?.foreshadow || [],
-        payoffTargets: node.hooks?.payoffTargets || [],
+        hook: hooks?.hook || '',
+        foreshadow: hooks?.foreshadow || [],
+        payoffTargets: hooks?.payoffTargets || [],
       },
     });
-    setEditedSettings(node.cinematicSettings || {});
+    setEditedSettings(settings);
     setHasChanges(false);
     
     // Try to match existing values to presets
-    if (node.goals?.dramaticGoal) {
+    if (goals?.dramaticGoal) {
       const match = DRAMATIC_GOAL_OPTIONS.find(o => 
-        node.goals?.dramaticGoal?.toLowerCase().includes(o.value.toLowerCase())
+        goals?.dramaticGoal?.toLowerCase().includes(o.value.toLowerCase())
       );
       if (match) setSelectedGoal(match.value);
     }
-    if (node.goals?.conflict) {
+    if (goals?.conflict) {
       const match = CONFLICT_OPTIONS.find(o => 
-        node.goals?.conflict?.toLowerCase().includes(o.value.toLowerCase())
+        goals?.conflict?.toLowerCase().includes(o.value.toLowerCase())
       );
       if (match) setSelectedConflict(match.value);
     }
-    if (node.goals?.turn) {
+    if (goals?.turn) {
       const match = TURN_OPTIONS.find(o => 
-        node.goals?.turn?.toLowerCase().includes(o.value.toLowerCase())
+        goals?.turn?.toLowerCase().includes(o.value.toLowerCase())
       );
       if (match) setSelectedTurn(match.value);
     }
-  }, [node]);
+  }, [node, node.versionHistory?.activeVersionNumber]);
 
   const handleSave = async () => {
     try {
-      await onUpdate(node._id, {
-        title: editedNode.title,
-        synopsis: editedNode.synopsis,
-        goals: editedNode.goals,
-        hooks: editedNode.hooks,
-        cinematicSettings: editedSettings,
-      });
+      // If we have version history, update the active version
+      if (node.versionHistory?.versions.length) {
+        const updatedVersions = node.versionHistory.versions.map(v => {
+          if (v.versionNumber === node.versionHistory?.activeVersionNumber) {
+            return {
+              ...v,
+              title: editedNode.title,
+              synopsis: editedNode.synopsis,
+              goals: editedNode.goals,
+              hooks: editedNode.hooks,
+              cinematicSettings: editedSettings,
+            };
+          }
+          return v;
+        });
+        
+        await onUpdate(node._id, {
+          title: editedNode.title, // Also update node-level for display in graph
+          versionHistory: {
+            versions: updatedVersions,
+            activeVersionNumber: node.versionHistory.activeVersionNumber,
+          },
+        });
+      } else {
+        // No version history, update node directly
+        await onUpdate(node._id, {
+          title: editedNode.title,
+          synopsis: editedNode.synopsis,
+          goals: editedNode.goals,
+          hooks: editedNode.hooks,
+          cinematicSettings: editedSettings,
+        });
+      }
       setHasChanges(false);
     } catch (err) {
       console.error("Failed to save scene:", err);
@@ -247,10 +290,6 @@ export function ScenePreviewModal({
     setEditedSettings(prev => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
-
-  const activeVersion = node.versionHistory?.versions.find(
-    v => v.versionNumber === node.versionHistory?.activeVersionNumber
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
@@ -337,15 +376,15 @@ export function ScenePreviewModal({
             <div className="grid grid-cols-2 gap-6">
               {/* Left Column - Images & Basic Info */}
               <div className="space-y-4">
-                {/* Main Scene Image - prioritize active version's firstFrame, fallback to node thumbnail */}
-                {(activeVersion?.firstFrame?.url || node.thumbnail?.url) && (
+                {/* Main Scene Image - prioritize active version's thumbnail/firstFrame, fallback to node thumbnail */}
+                {(activeVersion?.thumbnail?.url || activeVersion?.firstFrame?.url || node.thumbnail?.url) && (
                   <div className="relative rounded-2xl overflow-hidden shadow-lg">
                     <img 
-                      src={activeVersion?.firstFrame?.url || node.thumbnail?.url} 
+                      src={activeVersion?.thumbnail?.url || activeVersion?.firstFrame?.url || node.thumbnail?.url} 
                       alt="Scene thumbnail" 
                       className="w-full aspect-video object-cover"
                     />
-                    {activeVersion?.firstFrame?.url && (
+                    {(activeVersion?.thumbnail?.url || activeVersion?.firstFrame?.url) && (
                       <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded-lg text-[10px] text-white font-medium">
                         Version {activeVersion.versionNumber}
                       </div>

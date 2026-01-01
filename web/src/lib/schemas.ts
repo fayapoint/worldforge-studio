@@ -99,9 +99,22 @@ export const sceneFrameImageSchema = z.object({
 
 export const sceneVersionSchema = z.object({
   versionNumber: z.number().int().min(1),
+  title: z.string().optional(),
+  synopsis: z.string().optional(),
+  goals: z.object({
+    dramaticGoal: z.string().optional(),
+    conflict: z.string().optional(),
+    turn: z.string().optional(),
+  }).optional(),
+  hooks: z.object({
+    hook: z.string().optional(),
+    foreshadow: z.array(z.string()).optional(),
+    payoffTargets: z.array(z.string()).optional(),
+  }).optional(),
   prompt: z.string(),
   negativePrompt: z.string().optional(),
   cinematicSettings: z.record(z.string(), z.unknown()).optional(),
+  thumbnail: sceneFrameImageSchema.optional(),
   firstFrame: sceneFrameImageSchema.optional(),
   lastFrame: sceneFrameImageSchema.optional(),
   createdAt: z.coerce.date(),

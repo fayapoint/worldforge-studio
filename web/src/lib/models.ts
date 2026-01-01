@@ -150,9 +150,14 @@ export type SceneFrameImage = {
 
 export type SceneVersion = {
   versionNumber: number;
+  title?: string;
+  synopsis?: string;
+  goals?: { dramaticGoal?: string; conflict?: string; turn?: string };
+  hooks?: { hook?: string; foreshadow?: string[]; payoffTargets?: string[] };
   prompt: string;
   negativePrompt?: string;
   cinematicSettings: StoryNodeCinematicSettings;
+  thumbnail?: SceneFrameImage;
   firstFrame?: SceneFrameImage;
   lastFrame?: SceneFrameImage;
   createdAt: Date;

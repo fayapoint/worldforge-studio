@@ -1527,10 +1527,19 @@ export default function StoryGraphPage() {
     setSaving(true);
     try {
       const existingVersions = node.versionHistory?.versions || [];
+      
+      // Get current active version to copy from, or use node-level data
+      const currentActiveVersion = existingVersions.find(v => v.isActive);
+      
       const newVersion: SceneVersion = {
         versionNumber: version.versionNumber || existingVersions.length + 1,
+        title: version.title || currentActiveVersion?.title || node.title,
+        synopsis: version.synopsis || currentActiveVersion?.synopsis || node.synopsis,
+        goals: version.goals || currentActiveVersion?.goals || node.goals,
+        hooks: version.hooks || currentActiveVersion?.hooks || node.hooks,
         prompt: version.prompt || generatedPrompt || '',
-        cinematicSettings: version.cinematicSettings || node.cinematicSettings || {},
+        cinematicSettings: version.cinematicSettings || currentActiveVersion?.cinematicSettings || node.cinematicSettings || {},
+        thumbnail: version.thumbnail || currentActiveVersion?.thumbnail,
         createdAt: new Date(),
         isActive: true,
       };
@@ -1589,8 +1598,11 @@ export default function StoryGraphPage() {
     });
   };
 
-  // Upload thumbnail for a node
+  // Upload thumbnail for a node (stores both at node level AND active version level)
   const handleUploadThumbnail = async (nodeId: string, file: File): Promise<string> => {
+    const node = storyNodes.find(n => n._id === nodeId);
+    if (!node) return '';
+
     const reader = new FileReader();
     return new Promise((resolve) => {
       reader.onloadend = async () => {
@@ -1622,14 +1634,35 @@ export default function StoryGraphPage() {
           ctx?.drawImage(img, 0, 0, width, height);
           const thumbnailBase64 = canvas.toDataURL('image/jpeg', 0.85);
           
-          await handleUpdateNode(nodeId, {
-            thumbnail: {
-              url: thumbnailBase64,
-              uploadedAt: new Date(),
-              width,
-              height,
-            },
-          });
+          const thumbnailData = {
+            url: thumbnailBase64,
+            uploadedAt: new Date(),
+            width,
+            height,
+          };
+
+          // If we have version history, update the active version's thumbnail too
+          if (node.versionHistory?.versions.length) {
+            const updatedVersions = node.versionHistory.versions.map(v => {
+              if (v.versionNumber === node.versionHistory?.activeVersionNumber) {
+                return { ...v, thumbnail: thumbnailData };
+              }
+              return v;
+            });
+            
+            await handleUpdateNode(nodeId, {
+              thumbnail: thumbnailData, // Node-level for graph display
+              versionHistory: {
+                versions: updatedVersions,
+                activeVersionNumber: node.versionHistory.activeVersionNumber,
+              },
+            });
+          } else {
+            // No version history, just update node-level
+            await handleUpdateNode(nodeId, {
+              thumbnail: thumbnailData,
+            });
+          }
           
           resolve(thumbnailBase64);
         };
