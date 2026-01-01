@@ -282,7 +282,7 @@ async function cloudinaryUpload1px(cloudinaryUrl, folder, publicId, tags) {
     });
   }
 
-  const email = "admin@local.dev";
+  const email = "ricardofaya@gmail.com";
   let user = await db.collection("users").findOne({ tenantId, email });
   const userId = user?._id || new ObjectId();
 

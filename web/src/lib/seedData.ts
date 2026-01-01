@@ -12,20 +12,20 @@ export async function seedTchProject(db: DbLike) {
   const existingTenant = await colTenants(db).findOne({ name: "tch" });
   if (existingTenant) {
     tenantId = existingTenant._id as ObjectId;
-    const existingUser = await colUsers(db).findOne({ tenantId, email: "admin@local.dev" });
+    const existingUser = await colUsers(db).findOne({ tenantId, email: "ricardofaya@gmail.com" });
     if (existingUser) {
       userId = existingUser._id as ObjectId;
     } else {
       userId = new ObjectId();
       const passwordHash = await hashPassword("admin123");
-      await colUsers(db).insertOne({ _id: userId, tenantId, email: "admin@local.dev", passwordHash, roles: ["ADMIN"], createdAt: now } as any);
+      await colUsers(db).insertOne({ _id: userId, tenantId, email: "ricardofaya@gmail.com", passwordHash, roles: ["ADMIN"], createdAt: now } as any);
     }
   } else {
     tenantId = new ObjectId();
     userId = new ObjectId();
     await colTenants(db).insertOne({ _id: tenantId, name: "tch", plan: "FREE", createdAt: now } as any);
     const passwordHash = await hashPassword("admin123");
-    await colUsers(db).insertOne({ _id: userId, tenantId, email: "admin@local.dev", passwordHash, roles: ["ADMIN"], createdAt: now } as any);
+    await colUsers(db).insertOne({ _id: userId, tenantId, email: "ricardofaya@gmail.com", passwordHash, roles: ["ADMIN"], createdAt: now } as any);
   }
   
   const projectId = new ObjectId();
