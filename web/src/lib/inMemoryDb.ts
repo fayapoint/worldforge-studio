@@ -453,7 +453,7 @@ export async function getInMemoryDb(): Promise<InMemoryDb> {
         {
           _id: userId,
           tenantId,
-          email: "admin@local.dev",
+          email: "ricardofaya@gmail.com",
           passwordHash,
           roles: ["ADMIN"],
           createdAt: now,
