@@ -161,11 +161,20 @@ export function ScenePreviewModal({
   useEffect(() => {
     setEditedNode({
       title: node.title,
-      synopsis: node.synopsis,
-      goals: { ...node.goals },
-      hooks: { ...node.hooks },
+      synopsis: node.synopsis || '',
+      goals: { 
+        dramaticGoal: node.goals?.dramaticGoal || '',
+        conflict: node.goals?.conflict || '',
+        turn: node.goals?.turn || '',
+      },
+      hooks: { 
+        hook: node.hooks?.hook || '',
+        foreshadow: node.hooks?.foreshadow || [],
+        payoffTargets: node.hooks?.payoffTargets || [],
+      },
     });
     setEditedSettings(node.cinematicSettings || {});
+    setHasChanges(false);
     
     // Try to match existing values to presets
     if (node.goals?.dramaticGoal) {
@@ -189,11 +198,18 @@ export function ScenePreviewModal({
   }, [node]);
 
   const handleSave = async () => {
-    await onUpdate(node._id, {
-      ...editedNode,
-      cinematicSettings: editedSettings,
-    });
-    setHasChanges(false);
+    try {
+      await onUpdate(node._id, {
+        title: editedNode.title,
+        synopsis: editedNode.synopsis,
+        goals: editedNode.goals,
+        hooks: editedNode.hooks,
+        cinematicSettings: editedSettings,
+      });
+      setHasChanges(false);
+    } catch (err) {
+      console.error("Failed to save scene:", err);
+    }
   };
 
   const updateField = (field: string, value: any) => {
@@ -204,7 +220,12 @@ export function ScenePreviewModal({
   const updateGoals = (field: string, value: string) => {
     setEditedNode(prev => ({
       ...prev,
-      goals: { ...prev.goals, [field]: value } as any,
+      goals: { 
+        dramaticGoal: prev.goals?.dramaticGoal || '',
+        conflict: prev.goals?.conflict || '',
+        turn: prev.goals?.turn || '',
+        [field]: value,
+      },
     }));
     setHasChanges(true);
   };
@@ -212,7 +233,12 @@ export function ScenePreviewModal({
   const updateHooks = (field: string, value: string) => {
     setEditedNode(prev => ({
       ...prev,
-      hooks: { ...prev.hooks, [field]: value } as any,
+      hooks: { 
+        hook: prev.hooks?.hook || '',
+        foreshadow: prev.hooks?.foreshadow || [],
+        payoffTargets: prev.hooks?.payoffTargets || [],
+        [field]: value,
+      },
     }));
     setHasChanges(true);
   };
@@ -311,14 +337,19 @@ export function ScenePreviewModal({
             <div className="grid grid-cols-2 gap-6">
               {/* Left Column - Images & Basic Info */}
               <div className="space-y-4">
-                {/* Thumbnail */}
-                {node.thumbnail?.url && (
-                  <div className="rounded-2xl overflow-hidden shadow-lg">
+                {/* Main Scene Image - prioritize active version's firstFrame, fallback to node thumbnail */}
+                {(activeVersion?.firstFrame?.url || node.thumbnail?.url) && (
+                  <div className="relative rounded-2xl overflow-hidden shadow-lg">
                     <img 
-                      src={node.thumbnail.url} 
+                      src={activeVersion?.firstFrame?.url || node.thumbnail?.url} 
                       alt="Scene thumbnail" 
                       className="w-full aspect-video object-cover"
                     />
+                    {activeVersion?.firstFrame?.url && (
+                      <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded-lg text-[10px] text-white font-medium">
+                        Version {activeVersion.versionNumber}
+                      </div>
+                    )}
                   </div>
                 )}
 
