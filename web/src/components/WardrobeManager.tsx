@@ -59,6 +59,7 @@ function WardrobeItemCard({
   item,
   onSelect,
   onEdit,
+  onDelete,
   onFavorite,
   isFavorite,
   compact = false,
@@ -66,6 +67,7 @@ function WardrobeItemCard({
   item: CommunityWardrobeItem;
   onSelect?: (item: CommunityWardrobeItem) => void;
   onEdit?: (item: CommunityWardrobeItem) => void;
+  onDelete?: (item: CommunityWardrobeItem) => void;
   onFavorite?: (item: CommunityWardrobeItem) => void;
   isFavorite?: boolean;
   compact?: boolean;
@@ -73,47 +75,60 @@ function WardrobeItemCard({
   const rarityColor = RARITY_OPTIONS.find(r => r.value === item.rarity)?.color || "zinc";
   const typeInfo = WARDROBE_TYPE_OPTIONS.find(t => t.value === item.type);
 
+  const getRarityBgClass = () => {
+    switch (item.rarity) {
+      case "LEGENDARY": return "bg-amber-500";
+      case "RARE": return "bg-purple-500";
+      case "UNCOMMON": return "bg-blue-500";
+      default: return "bg-zinc-500";
+    }
+  };
+
   return (
     <div 
-      className={`group relative rounded-xl bg-white/60 border border-white/40 overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer ${
+      className={`group relative rounded-xl bg-white border border-zinc-200 overflow-hidden shadow-sm hover:shadow-xl hover:border-indigo-300 transition-all cursor-pointer ${
         compact ? "p-2" : "p-3"
       }`}
       onClick={() => onSelect?.(item)}
     >
       {/* Image or placeholder */}
       <div className={`relative rounded-lg overflow-hidden bg-gradient-to-br from-zinc-100 to-zinc-200 ${
-        compact ? "h-16 mb-2" : "h-24 mb-3"
+        compact ? "h-20 mb-2" : "h-32 mb-3"
       }`}>
         {item.imageUrl || item.thumbnailUrl ? (
           <img 
             src={item.thumbnailUrl || item.imageUrl} 
             alt={item.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+            }}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Icon name={typeInfo?.icon || "star"} className={`text-zinc-400 ${compact ? "h-6 w-6" : "h-8 w-8"}`} />
-          </div>
-        )}
+        ) : null}
+        <div className={`w-full h-full flex items-center justify-center ${item.imageUrl || item.thumbnailUrl ? 'hidden' : ''}`}>
+          <Icon name={typeInfo?.icon || "star"} className={`text-zinc-300 ${compact ? "h-8 w-8" : "h-12 w-12"}`} />
+        </div>
         
         {/* Rarity badge */}
-        <div className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-${rarityColor}-500 text-white`}>
+        <div className={`absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${getRarityBgClass()} text-white shadow-sm`}>
           {item.rarity}
         </div>
 
         {/* Character badge */}
         {item.characterName && (
-          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-medium bg-indigo-600 text-white truncate max-w-[80%]">
+          <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full text-[9px] font-medium bg-indigo-600 text-white truncate max-w-[85%] shadow-sm">
             {item.characterName}
           </div>
         )}
 
         {/* Actions overlay */}
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-2 gap-1.5">
           {onEdit && (
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-              className="p-2 rounded-full bg-white/90 hover:bg-white text-zinc-700 transition-all"
+              className="p-2 rounded-full bg-white/95 hover:bg-white text-indigo-600 transition-all shadow-lg"
+              title="Edit"
             >
               <Icon name="edit" className="h-4 w-4" />
             </button>
@@ -121,13 +136,23 @@ function WardrobeItemCard({
           {onFavorite && (
             <button
               onClick={(e) => { e.stopPropagation(); onFavorite(item); }}
-              className={`p-2 rounded-full transition-all ${
+              className={`p-2 rounded-full transition-all shadow-lg ${
                 isFavorite 
-                  ? "bg-red-500 text-white" 
-                  : "bg-white/90 hover:bg-white text-zinc-700"
+                  ? "bg-red-500 text-white hover:bg-red-600" 
+                  : "bg-white/95 hover:bg-white text-zinc-600"
               }`}
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Icon name="heart" className="h-4 w-4" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${item.name}"?`)) onDelete(item); }}
+              className="p-2 rounded-full bg-white/95 hover:bg-red-500 hover:text-white text-red-500 transition-all shadow-lg"
+              title="Delete"
+            >
+              <Icon name="trash" className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -686,6 +711,19 @@ export function WardrobeManager({
     });
   };
 
+  // Handle delete
+  const handleDelete = async (item: CommunityWardrobeItem) => {
+    const result = await apiFetch(`/api/wardrobe/${item._id}`, {
+      method: "DELETE",
+    });
+    
+    if (result.ok) {
+      await fetchItems();
+    } else {
+      alert("Failed to delete item: " + (result.error?.message || "Unknown error"));
+    }
+  };
+
   return (
     <div className={`flex flex-col h-full ${compact ? "" : "bg-white/40 backdrop-blur-xl rounded-2xl"}`}>
       {/* Header */}
@@ -808,6 +846,7 @@ export function WardrobeManager({
                 item={item}
                 onSelect={handleSelect}
                 onEdit={mode === "manage" ? (item) => { setEditingItem(item); setShowAddModal(true); } : undefined}
+                onDelete={mode === "manage" ? handleDelete : undefined}
                 onFavorite={handleFavorite}
                 isFavorite={favoriteIds.has(item._id)}
                 compact={compact}
