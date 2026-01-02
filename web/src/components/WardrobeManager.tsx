@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Icon, type IconName } from "@/lib/ui";
+import { apiFetch } from "@/lib/apiClient";
 import type { 
   CommunityWardrobeItem, 
   WardrobeItemType, 
@@ -595,14 +596,13 @@ export function WardrobeManager({
         params.set("characterEntityId", selectedCharacterId);
       }
 
-      const res = await fetch(`/api/wardrobe?${params.toString()}`);
-      const data = await res.json();
+      const result = await apiFetch<{ items: CommunityWardrobeItem[]; count: number }>(`/api/wardrobe?${params.toString()}`);
       
-      if (!res.ok) {
-        setError(data.error?.message || `API error: ${res.status}`);
+      if (!result.ok) {
+        setError(result.error.message);
         setItems([]);
-      } else if (data.items) {
-        setItems(data.items);
+      } else if (result.data.items) {
+        setItems(result.data.items);
       } else {
         setError("No items in response");
         setItems([]);
@@ -641,14 +641,13 @@ export function WardrobeManager({
     const url = editingItem ? `/api/wardrobe/${editingItem._id}` : "/api/wardrobe";
     const method = editingItem ? "PUT" : "POST";
 
-    const res = await fetch(url, {
+    const result = await apiFetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
 
-    if (!res.ok) {
-      throw new Error("Failed to save");
+    if (!result.ok) {
+      throw new Error(result.error.message || "Failed to save");
     }
 
     await fetchItems();
@@ -658,9 +657,8 @@ export function WardrobeManager({
   const handleSelect = (item: CommunityWardrobeItem) => {
     if (onSelectItem) {
       // Track usage
-      fetch(`/api/wardrobe/${item._id}`, {
+      apiFetch(`/api/wardrobe/${item._id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "use" }),
       });
       onSelectItem(item);
@@ -672,9 +670,8 @@ export function WardrobeManager({
     const isFav = favoriteIds.has(item._id);
     const action = isFav ? "unfavorite" : "favorite";
     
-    await fetch(`/api/wardrobe/${item._id}`, {
+    await apiFetch(`/api/wardrobe/${item._id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
     });
 

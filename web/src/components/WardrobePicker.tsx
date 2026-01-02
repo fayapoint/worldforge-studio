@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Icon, type IconName } from "@/lib/ui";
+import { apiFetch } from "@/lib/apiClient";
 import type { CommunityWardrobeItem, WardrobeItemType, Entity } from "@/lib/models";
 
 // =====================================================
@@ -59,10 +60,9 @@ export function WardrobePicker({
         params.set("characterEntityId", characterEntityId);
       }
 
-      const res = await fetch(`/api/wardrobe?${params.toString()}`);
-      const data = await res.json();
-      if (data.items) {
-        setItems(data.items);
+      const result = await apiFetch<{ items: CommunityWardrobeItem[] }>(`/api/wardrobe?${params.toString()}`);
+      if (result.ok && result.data.items) {
+        setItems(result.data.items);
       }
     } catch (err) {
       console.error("Failed to fetch wardrobe:", err);
@@ -76,9 +76,8 @@ export function WardrobePicker({
 
   const handleSelect = (item: CommunityWardrobeItem) => {
     // Track usage
-    fetch(`/api/wardrobe/${item._id}`, {
+    apiFetch(`/api/wardrobe/${item._id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "use" }),
     });
     onSelectItem(item);
