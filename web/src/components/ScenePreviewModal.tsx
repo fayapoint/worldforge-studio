@@ -851,6 +851,94 @@ export function ScenePreviewModal({
                   </div>
                 )}
 
+                {/* Characters in Scene */}
+                {node.screenplay?.characterInstances && node.screenplay.characterInstances.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-rose-900 flex items-center gap-2">
+                        <Icon name="users" className="h-4 w-4" />
+                        Characters in Scene
+                      </h4>
+                      <span className="text-[10px] text-rose-600 bg-rose-100 px-2 py-1 rounded-full font-medium">
+                        {node.screenplay.characterInstances.filter(c => c.includeInPrompt).length} in prompt
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {node.screenplay.characterInstances.map((instance) => (
+                        <div 
+                          key={instance.id}
+                          className={`p-3 rounded-xl bg-white/70 border ${instance.includeInPrompt ? 'border-rose-200' : 'border-zinc-200 opacity-60'}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {instance.thumbnailUrl ? (
+                              <img 
+                                src={instance.thumbnailUrl} 
+                                alt={instance.name}
+                                className="w-10 h-10 rounded-lg object-cover border border-white shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center text-white">
+                                <Icon name="character" className="h-5 w-5" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-sm text-zinc-900">{instance.name}</div>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-rose-100 text-rose-700">
+                                  {instance.position}
+                                </span>
+                                {instance.expression && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-100 text-amber-700">
+                                    {instance.expression}
+                                  </span>
+                                )}
+                                {instance.currentAction && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-100 text-blue-700 truncate max-w-[100px]">
+                                    {instance.currentAction}
+                                  </span>
+                                )}
+                                {instance.dialogLines.length > 0 && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-purple-100 text-purple-700">
+                                    {instance.dialogLines.length} lines
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {instance.currentOutfitDescription && (
+                            <div className="mt-2 text-[10px] text-zinc-500 italic pl-13">
+                              {instance.currentOutfitDescription}
+                            </div>
+                          )}
+                          {instance.dialogLines.length > 0 && (
+                            <div className="mt-2 pl-13 space-y-1">
+                              {instance.dialogLines.slice(0, 2).map((line, i) => (
+                                <div key={line.id} className="text-[10px] text-zinc-600 bg-zinc-50 rounded p-1.5">
+                                  <span className="font-medium text-zinc-700">{i + 1}.</span> "{line.text}"
+                                  {line.emotion && <span className="text-zinc-400 ml-1">({line.emotion})</span>}
+                                </div>
+                              ))}
+                              {instance.dialogLines.length > 2 && (
+                                <div className="text-[9px] text-zinc-400">
+                                  +{instance.dialogLines.length - 2} more lines
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {node.screenplay.sceneDirection && (
+                      <div className="mt-3 p-2 rounded-lg bg-white/50 border border-rose-100">
+                        <div className="text-[10px] font-semibold text-rose-600 uppercase mb-1">Scene Direction</div>
+                        <div className="text-xs text-zinc-700">{node.screenplay.sceneDirection}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Prompt Gallery */}
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200">
                   <div className="flex items-center justify-between mb-3">

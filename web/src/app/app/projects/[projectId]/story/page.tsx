@@ -26,6 +26,7 @@ import { PromptExportModal } from "@/components/PromptExportModal";
 import { InsertNodeWizard } from "@/components/InsertNodeWizard";
 import { SceneVersionPanel } from "@/components/SceneVersionPanel";
 import { ScenePreviewModal } from "@/components/ScenePreviewModal";
+import { ScreenplayPanel } from "@/components/ScreenplayPanel";
 import type { ExportedPrompt, CinematicSettings, SceneVersion } from "@/lib/models";
 import {
   NODE_TYPE_OPTIONS,
@@ -372,6 +373,7 @@ function PropertiesPanel({
   onDeleteThumbnail,
   onOpenScenePreview,
   currentPrompt,
+  entities,
 }: {
   selectedNode: StoryNode | null;
   onUpdate: (nodeId: string, data: Partial<StoryNode>) => Promise<void>;
@@ -392,6 +394,7 @@ function PropertiesPanel({
   onDeleteThumbnail?: (nodeId: string) => Promise<void>;
   onOpenScenePreview?: () => void;
   currentPrompt?: string;
+  entities?: Entity[];
 }) {
   const [editingSynopsis, setEditingSynopsis] = useState(false);
   const [synopsisValue, setSynopsisValue] = useState("");
@@ -403,7 +406,7 @@ function PropertiesPanel({
   const [turnValue, setTurnValue] = useState("");
   const [editingHook, setEditingHook] = useState(false);
   const [hookValue, setHookValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"properties" | "cinematic" | "versions">("cinematic");
+  const [activeTab, setActiveTab] = useState<"properties" | "cinematic" | "versions" | "screenplay">("cinematic");
 
   useEffect(() => {
     if (selectedNode) {
@@ -588,6 +591,17 @@ function PropertiesPanel({
               Versions
             </button>
             <button
+              onClick={() => setActiveTab("screenplay")}
+              className={`px-2 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                activeTab === "screenplay"
+                  ? "bg-gradient-to-r from-rose-600 to-orange-600 text-white shadow-lg"
+                  : "text-zinc-600 hover:bg-white/50"
+              }`}
+            >
+              <Icon name="film" className="h-3.5 w-3.5" />
+              Screenplay
+            </button>
+            <button
               onClick={() => setActiveTab("properties")}
               className={`px-2 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
                 activeTab === "properties"
@@ -637,6 +651,7 @@ function PropertiesPanel({
           nodeId={selectedNode?._id}
           nodeTitle={selectedNode?.title}
           nodeSynopsis={selectedNode?.synopsis}
+          screenplay={selectedNode?.screenplay}
           initialSelections={selectedNode?.cinematicSettings}
           onPromptGenerated={onPromptGenerated}
           onSelectionsChange={(selections) => {
@@ -715,6 +730,13 @@ function PropertiesPanel({
             </div>
           )}
         </>
+      ) : activeTab === "screenplay" ? (
+        <ScreenplayPanel
+          node={selectedNode}
+          entities={entities || []}
+          onUpdate={onUpdate}
+          saving={saving}
+        />
       ) : (
         <>
           {/* Properties Tab Content */}
@@ -1896,6 +1918,7 @@ export default function StoryGraphPage() {
             onDeleteThumbnail={handleDeleteThumbnail}
             onOpenScenePreview={() => setShowScenePreview(true)}
             currentPrompt={generatedPrompt}
+            entities={entities}
           />
         }
         showRightPanel={true}
@@ -2119,6 +2142,7 @@ export default function StoryGraphPage() {
             onDeleteThumbnail={handleDeleteThumbnail}
             onOpenScenePreview={() => setShowScenePreview(true)}
             currentPrompt={generatedPrompt}
+            entities={entities}
           />
         </div>
       </div>

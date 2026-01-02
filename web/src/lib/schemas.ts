@@ -127,6 +127,81 @@ export const sceneVersionHistorySchema = z.object({
   activeVersionNumber: z.number().int().min(0),
 });
 
+// Screenplay schemas
+export const dialogLineSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  emotion: z.string().optional(),
+  direction: z.string().optional(),
+  voiceTone: z.string().optional(),
+});
+
+export const wardrobeItemSchema = z.object({
+  type: z.enum(["TOP", "BOTTOM", "DRESS", "OUTERWEAR", "FOOTWEAR", "ACCESSORY", "HEADWEAR", "FULL_OUTFIT"]),
+  description: z.string(),
+  color: z.string().optional(),
+  style: z.string().optional(),
+  condition: z.enum(["PRISTINE", "WORN", "DAMAGED", "DIRTY", "WET"]).optional(),
+});
+
+export const characterStateChangeSchema = z.object({
+  field: z.string(),
+  previousValue: z.string().optional(),
+  newValue: z.string(),
+  reason: z.string().optional(),
+});
+
+export const sceneCharacterInstanceSchema = z.object({
+  id: z.string(),
+  entityId: z.string(),
+  sceneNodeId: z.string(),
+  name: z.string(),
+  thumbnailUrl: z.string().optional(),
+  baseAppearance: z.string().optional(),
+  wardrobe: z.array(wardrobeItemSchema).default([]),
+  currentOutfitDescription: z.string().optional(),
+  position: z.enum(["FOREGROUND", "MIDGROUND", "BACKGROUND", "LEFT", "CENTER", "RIGHT", "OFF_SCREEN"]).default("CENTER"),
+  facing: z.enum(["CAMERA", "AWAY", "LEFT", "RIGHT", "UP", "DOWN"]).optional(),
+  pose: z.string().optional(),
+  expression: z.string().optional(),
+  bodyLanguage: z.string().optional(),
+  currentAction: z.string().optional(),
+  actionIntensity: z.enum(["SUBTLE", "MODERATE", "DRAMATIC"]).optional(),
+  props: z.array(z.string()).optional(),
+  dialogLines: z.array(dialogLineSchema).default([]),
+  isSpeaking: z.boolean().optional(),
+  speakingOrder: z.number().optional(),
+  emotionalState: z.string().optional(),
+  internalThought: z.string().optional(),
+  motivation: z.string().optional(),
+  stateChanges: z.array(characterStateChangeSchema).default([]),
+  previousSceneInstanceId: z.string().optional(),
+  continuityNotes: z.string().optional(),
+  visualPromptOverride: z.string().optional(),
+  includeInPrompt: z.boolean().default(true),
+  promptPriority: z.number().default(1),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+
+export const sceneScreenplaySchema = z.object({
+  sceneNodeId: z.string(),
+  characterInstances: z.array(sceneCharacterInstanceSchema).default([]),
+  sceneDirection: z.string().optional(),
+  openingAction: z.string().optional(),
+  closingAction: z.string().optional(),
+  atmosphereNotes: z.string().optional(),
+  pacing: z.enum(["SLOW", "MEDIUM", "FAST", "FRENETIC"]).optional(),
+  tension: z.enum(["LOW", "BUILDING", "HIGH", "CLIMAX", "RELEASE"]).optional(),
+  dialogSequence: z.array(z.string()).default([]),
+  previousSceneId: z.string().optional(),
+  nextSceneId: z.string().optional(),
+  continuityChecklist: z.array(z.string()).optional(),
+  generatedCharacterPrompt: z.string().optional(),
+  generatedActionPrompt: z.string().optional(),
+  generatedDialogSummary: z.string().optional(),
+});
+
 export const storyNodeInputSchema = z.object({
   nodeType: nodeTypeSchema,
   title: z.string().min(1),
@@ -159,6 +234,7 @@ export const storyNodeInputSchema = z.object({
   thumbnail: sceneFrameImageSchema.optional(),
   parentNodeId: z.string().optional(),
   variationType: z.enum(['DUPLICATE', 'CONTINUATION', 'CLOSE_SHOT', 'WIDE_SHOT']).optional(),
+  screenplay: sceneScreenplaySchema.optional(),
 });
 
 export const storyNodePatchSchema = storyNodeInputSchema.partial();

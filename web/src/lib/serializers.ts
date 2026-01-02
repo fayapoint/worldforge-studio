@@ -7,6 +7,8 @@ import type {
   StoryNode,
   Tenant,
   User,
+  CommunityWardrobeItem,
+  CharacterWardrobe,
 } from "./models";
 import type {
   EntityDoc,
@@ -16,6 +18,8 @@ import type {
   StoryNodeDoc,
   TenantDoc,
   UserDoc,
+  CommunityWardrobeItemDoc,
+  CharacterWardrobeDoc,
 } from "./collections";
 import { asIdString } from "./ids";
 
@@ -129,5 +133,62 @@ export function serializePromptPack(doc: PromptPackDoc): PromptPack {
     continuityNotes: doc.continuityNotes,
     createdAt: doc.createdAt,
     createdBy: oid(doc.createdBy),
+  };
+}
+
+export function serializeCommunityWardrobeItem(doc: CommunityWardrobeItemDoc): CommunityWardrobeItem {
+  return {
+    _id: oid(doc._id),
+    name: doc.name,
+    type: doc.type,
+    description: doc.description,
+    promptText: doc.promptText,
+    negativePrompt: doc.negativePrompt,
+    color: doc.color,
+    colors: doc.colors,
+    pattern: doc.pattern,
+    material: doc.material,
+    style: doc.style,
+    era: doc.era,
+    tags: doc.tags,
+    category: doc.category,
+    gender: doc.gender,
+    ageGroup: doc.ageGroup,
+    rarity: doc.rarity,
+    isPublic: doc.isPublic,
+    restrictedToCharacters: doc.restrictedToCharacters?.map(oid),
+    restrictedToConditions: doc.restrictedToConditions,
+    characterEntityId: doc.characterEntityId ? oid(doc.characterEntityId) : undefined,
+    characterName: doc.characterName,
+    imageUrl: doc.imageUrl,
+    imagePublicId: doc.imagePublicId,
+    thumbnailUrl: doc.thumbnailUrl,
+    referenceImages: doc.referenceImages,
+    aiGeneratedDescription: doc.aiGeneratedDescription,
+    aiRecognizedDetails: doc.aiRecognizedDetails,
+    aiSuggestedPrompt: doc.aiSuggestedPrompt,
+    aiLastAnalyzed: doc.aiLastAnalyzed,
+    usageCount: doc.usageCount,
+    lastUsedAt: doc.lastUsedAt,
+    favoriteCount: doc.favoriteCount,
+    createdAt: doc.createdAt,
+    createdBy: oid(doc.createdBy),
+    updatedAt: doc.updatedAt,
+    updatedBy: oid(doc.updatedBy),
+    previousVersions: doc.previousVersions,
+  };
+}
+
+export function serializeCharacterWardrobe(doc: CharacterWardrobeDoc): CharacterWardrobe {
+  return {
+    _id: oid(doc._id),
+    entityId: oid(doc.entityId),
+    characterName: doc.characterName,
+    defaultOutfitDescription: doc.defaultOutfitDescription,
+    defaultOutfitItems: doc.defaultOutfitItems,
+    outfitCollections: doc.outfitCollections,
+    favoriteItemIds: doc.favoriteItemIds,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
   };
 }

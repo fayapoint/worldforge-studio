@@ -7,6 +7,8 @@ import {
   colStoryNodes,
   colTenants,
   colUsers,
+  colCommunityWardrobe,
+  colCharacterWardrobes,
 } from "./collections";
 
 let ensured = false;
@@ -38,6 +40,22 @@ export async function ensureIndexes() {
   await colStoryEdges(db).createIndex({ tenantId: 1, projectId: 1, toNodeId: 1 });
 
   await colPromptPacks(db).createIndex({ tenantId: 1, projectId: 1, nodeId: 1, createdAt: -1 });
+
+  // Community Wardrobe indexes
+  await colCommunityWardrobe(db).createIndex({ type: 1, isPublic: 1 });
+  await colCommunityWardrobe(db).createIndex({ tags: 1 });
+  await colCommunityWardrobe(db).createIndex({ characterEntityId: 1 });
+  await colCommunityWardrobe(db).createIndex({ rarity: 1 });
+  await colCommunityWardrobe(db).createIndex({ usageCount: -1 });
+  await colCommunityWardrobe(db).createIndex({ 
+    name: "text", 
+    description: "text", 
+    tags: "text",
+    promptText: "text",
+  });
+
+  // Character Wardrobes indexes
+  await colCharacterWardrobes(db).createIndex({ entityId: 1 }, { unique: true });
 
   ensured = true;
 }

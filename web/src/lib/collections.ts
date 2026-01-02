@@ -1,5 +1,5 @@
 import type { ObjectId } from "mongodb";
-import type { Entity, Project, PromptPack, StoryEdge, StoryNode, Tenant, User } from "./models";
+import type { Entity, Project, PromptPack, StoryEdge, StoryNode, Tenant, User, CommunityWardrobeItem, CharacterWardrobe } from "./models";
 
 export type CursorLike<T> = {
   sort(spec: Record<string, unknown>): CursorLike<T>;
@@ -61,6 +61,21 @@ export type PromptPackDoc =
     createdBy: ObjectId;
   };
 
+export type CommunityWardrobeItemDoc =
+  Omit<CommunityWardrobeItem, "_id" | "createdBy" | "updatedBy" | "characterEntityId" | "restrictedToCharacters"> & {
+    _id: ObjectId;
+    createdBy: ObjectId;
+    updatedBy: ObjectId;
+    characterEntityId?: ObjectId;
+    restrictedToCharacters?: ObjectId[];
+  };
+
+export type CharacterWardrobeDoc =
+  Omit<CharacterWardrobe, "_id" | "entityId"> & {
+    _id: ObjectId;
+    entityId: ObjectId;
+  };
+
 export function colTenants(db: DbLike): CollectionLike<TenantDoc> {
   return db.collection<TenantDoc>("tenants");
 }
@@ -87,4 +102,12 @@ export function colStoryEdges(db: DbLike): CollectionLike<StoryEdgeDoc> {
 
 export function colPromptPacks(db: DbLike): CollectionLike<PromptPackDoc> {
   return db.collection<PromptPackDoc>("promptPacks");
+}
+
+export function colCommunityWardrobe(db: DbLike): CollectionLike<CommunityWardrobeItemDoc> {
+  return db.collection<CommunityWardrobeItemDoc>("communityWardrobe");
+}
+
+export function colCharacterWardrobes(db: DbLike): CollectionLike<CharacterWardrobeDoc> {
+  return db.collection<CharacterWardrobeDoc>("characterWardrobes");
 }

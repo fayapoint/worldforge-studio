@@ -27,6 +27,8 @@ import {
   type CinematicOption,
   type QuickPreset,
 } from "@/lib/cinematicPromptOptions";
+import { buildScreenplayPrompt } from "@/lib/screenplayPromptBuilder";
+import type { SceneScreenplay } from "@/lib/models";
 
 // =====================================================
 // TOOLTIP COMPONENT
@@ -183,6 +185,7 @@ type CinematicPromptBuilderProps = {
   nodeTitle?: string;
   nodeSynopsis?: string;
   nodeId?: string;
+  screenplay?: SceneScreenplay;
   onPromptGenerated?: (prompt: string) => void;
   onSelectionsChange?: (selections: CinematicSelections) => void;
   initialSelections?: Partial<CinematicSelections>;
@@ -193,6 +196,7 @@ export function CinematicPromptBuilder({
   nodeTitle,
   nodeSynopsis,
   nodeId,
+  screenplay,
   onPromptGenerated,
   onSelectionsChange,
   initialSelections,
@@ -253,6 +257,12 @@ export function CinematicPromptBuilder({
   const generatedPrompt = useMemo(() => {
     let prompt = buildCinematicPrompt(selections);
     
+    // Add screenplay character/action prompt if available
+    const screenplayOutput = buildScreenplayPrompt(screenplay);
+    if (screenplayOutput.fullScenePrompt) {
+      prompt = screenplayOutput.fullScenePrompt + (prompt ? ". " + prompt : "");
+    }
+    
     // Add node context if available
     if (nodeTitle || nodeSynopsis) {
       const context = [];
@@ -264,7 +274,7 @@ export function CinematicPromptBuilder({
     }
     
     return prompt;
-  }, [selections, nodeTitle, nodeSynopsis]);
+  }, [selections, nodeTitle, nodeSynopsis, screenplay]);
 
   // Notify parent of prompt changes
   useEffect(() => {
