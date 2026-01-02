@@ -580,9 +580,12 @@ export function WardrobeManager({
   const [showAddModal, setShowAddModal] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
+  const [error, setError] = useState<string | null>(null);
+
   // Fetch wardrobe items
   const fetchItems = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
       if (selectedType) params.set("type", selectedType);
@@ -594,11 +597,20 @@ export function WardrobeManager({
 
       const res = await fetch(`/api/wardrobe?${params.toString()}`);
       const data = await res.json();
-      if (data.items) {
+      
+      if (!res.ok) {
+        setError(data.error?.message || `API error: ${res.status}`);
+        setItems([]);
+      } else if (data.items) {
         setItems(data.items);
+      } else {
+        setError("No items in response");
+        setItems([]);
       }
     } catch (err) {
       console.error("Failed to fetch wardrobe items:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch");
+      setItems([]);
     }
     setLoading(false);
   }, [selectedType, selectedRarity, searchText, showCharacterItems, selectedCharacterId]);
@@ -768,6 +780,18 @@ export function WardrobeManager({
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <Icon name="refresh" className="h-6 w-6 animate-spin text-zinc-400" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-32 text-center">
+            <Icon name="alert" className="h-8 w-8 text-red-400 mb-2" />
+            <p className="text-sm text-red-600 font-medium">Error loading wardrobe</p>
+            <p className="text-xs text-red-500">{error}</p>
+            <button 
+              onClick={fetchItems}
+              className="mt-3 px-4 py-2 rounded-lg bg-red-100 text-red-700 text-xs font-medium hover:bg-red-200"
+            >
+              Try Again
+            </button>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-center">
