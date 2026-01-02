@@ -26,12 +26,9 @@ export async function GET(req: NextRequest) {
 
     const db = await getDb();
 
-    // Build filter - show public items or items created by the user
+    // Build filter - show all public items (simplified for now)
     const filter: Record<string, unknown> = {
-      $or: [
-        { isPublic: true },
-        { createdBy: new ObjectId(auth.userId) },
-      ],
+      isPublic: true,
     };
 
     if (type) filter.type = type;
@@ -45,6 +42,8 @@ export async function GET(req: NextRequest) {
       filter.$text = { $search: search };
     }
 
+    console.log("[Wardrobe API] Filter:", JSON.stringify(filter));
+    
     const items = await colCommunityWardrobe(db)
       .find(filter)
       .sort({ usageCount: -1, createdAt: -1 })
@@ -52,11 +51,14 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .toArray();
 
+    console.log("[Wardrobe API] Found items:", items.length);
+
     return jsonOk({ 
       items: items.map(serializeCommunityWardrobeItem),
       count: items.length,
     });
   } catch (err: unknown) {
+    console.error("[Wardrobe API] Error:", err);
     return jsonError(err);
   }
 }
