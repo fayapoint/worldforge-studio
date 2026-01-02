@@ -72,7 +72,8 @@ export type IconName =
   | "chevronUp"
   | "info"
   | "alert"
-  | "file";
+  | "file"
+  | "crown";
 
 export function Icon({ name, className }: { name: IconName; className?: string }) {
   const common = {
@@ -671,6 +672,12 @@ export function Icon({ name, className }: { name: IconName; className?: string }
         <svg {...common} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
           <polyline points="14 2 14 8 20 8" />
+        </svg>
+      );
+    case "crown":
+      return (
+        <svg {...common} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
         </svg>
       );
   }

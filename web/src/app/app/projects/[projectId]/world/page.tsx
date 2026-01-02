@@ -10,6 +10,25 @@ import { EntityExportEnhanced } from "@/components/EntityExportEnhanced";
 import { ImageGalleryModal } from "@/components/ImageGalleryModal";
 import { SeedTCHButton } from "@/components/SeedTCHButton";
 import { getTransformedUrl } from "@/lib/cloudinaryUtils";
+import { ImageCropper } from "@/components/ImageCropper";
+import { PoseManager, type ManagedPose } from "@/components/PoseManager";
+import { CharacterPreviewPanel } from "@/components/CharacterPreviewPanel";
+import { PresetIconSelector, CompactPresetSelector } from "@/components/PresetIconSelector";
+import {
+  ROLE_OPTIONS,
+  ARCHETYPE_OPTIONS,
+  PRONOUN_OPTIONS,
+  AGE_OPTIONS,
+  PERSONALITY_OPTIONS,
+  APPEARANCE_OPTIONS,
+  BACKSTORY_OPTIONS,
+  MOTIVATION_OPTIONS,
+  VOICE_OPTIONS,
+  SKILL_OPTIONS,
+  WEAKNESS_OPTIONS,
+  POSE_OPTIONS,
+  EXPRESSION_OPTIONS,
+} from "@/lib/characterPresets";
 
 type AIField = "personality" | "appearance" | "backstory" | "motivation" | "voiceNotes" | "summary" | "all";
 
@@ -101,6 +120,13 @@ export default function WorldPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [wizardGenerating, setWizardGenerating] = useState(false);
 
+  // New states for enhanced character editing
+  const [showFaceCropper, setShowFaceCropper] = useState(false);
+  const [managedPoses, setManagedPoses] = useState<ManagedPose[]>([]);
+  const [selectedPose, setSelectedPose] = useState<ManagedPose | null>(null);
+  const [selectedExpression, setSelectedExpression] = useState<string>("");
+  const [showPoseManager, setShowPoseManager] = useState(false);
+
   const load = useCallback(async () => {
     setError(null);
     const qs = new URLSearchParams();
@@ -135,6 +161,20 @@ export default function WorldPage() {
       setEditAttributes(JSON.stringify(selected.attributes ?? {}, null, 2));
       setEditMedia((selected.media ?? {}) as EntityMedia);
       setEditCharacter((selected.character ?? {}) as CharacterDetails);
+      
+      // Convert pose URLs to managed poses
+      const poseUrls = selected.media?.poseUrls ?? [];
+      const posePublicIds = selected.media?.posePublicIds ?? [];
+      const poses: ManagedPose[] = poseUrls.map((url, idx) => ({
+        id: posePublicIds[idx] || `pose-${idx}`,
+        name: `Pose ${idx + 1}`,
+        url,
+        publicId: posePublicIds[idx],
+        isDefault: idx === 0,
+      }));
+      setManagedPoses(poses);
+      setSelectedPose(poses[0] || null);
+      setSelectedExpression("");
     }
   }, [selected]);
 
@@ -877,7 +917,24 @@ export default function WorldPage() {
                         }}
                       />
                     ) : (
-                      <div className="mt-2 h-36 w-full rounded-lg border border-dashed border-zinc-200 bg-zinc-50" />
+                      <div className="mt-2 h-36 w-full rounded-lg border border-dashed border-zinc-200 bg-zinc-50 flex flex-col items-center justify-center">
+                        {editMedia.thumbnailUrl ? (
+                          <>
+                            <Icon name="maximize" className="h-6 w-6 text-zinc-300 mb-1" />
+                            <p className="text-[10px] text-zinc-400 mb-2">No face selected</p>
+                            <button
+                              type="button"
+                              onClick={() => setShowFaceCropper(true)}
+                              className="px-2 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-medium hover:bg-indigo-700 flex items-center gap-1"
+                            >
+                              <Icon name="maximize" className="h-3 w-3" />
+                              Crop from Thumbnail
+                            </button>
+                          </>
+                        ) : (
+                          <p className="text-[10px] text-zinc-400">Upload thumbnail first</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1070,76 +1127,198 @@ export default function WorldPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <div className="text-xs font-medium text-zinc-700">Role</div>
-                        <input
-                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
-                          value={editCharacter.role ?? ""}
-                          onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), role: e.target.value || undefined }))}
-                          placeholder="Protagonist, antagonist..."
-                        />
+                    {/* Role with Preset Icons */}
+                    <div className="space-y-1.5">
+                      <div className="text-xs font-medium text-zinc-700">Role in Story</div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {ROLE_OPTIONS.slice(0, 6).map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setEditCharacter((c) => ({ ...c, role: option.value }))}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                              editCharacter.role === option.value
+                                ? "bg-indigo-600 text-white"
+                                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                            }`}
+                            title={option.description}
+                          >
+                            <Icon name={option.icon as any} className="h-3 w-3" />
+                            {option.label}
+                          </button>
+                        ))}
                       </div>
-                      <div className="space-y-1.5">
-                        <div className="text-xs font-medium text-zinc-700">Pronouns</div>
-                        <input
-                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
-                          value={editCharacter.pronouns ?? ""}
-                          onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), pronouns: e.target.value || undefined }))}
-                          placeholder="he/him, she/her..."
-                        />
-                      </div>
+                      <input
+                        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
+                        value={editCharacter.role ?? ""}
+                        onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), role: e.target.value || undefined }))}
+                        placeholder="Or type custom role..."
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
+                      {/* Pronouns with Preset Icons */}
                       <div className="space-y-1.5">
-                        <div className="text-xs font-medium text-zinc-700">Age</div>
+                        <div className="text-xs font-medium text-zinc-700">Pronouns</div>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {PRONOUN_OPTIONS.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setEditCharacter((c) => ({ ...c, pronouns: option.value }))}
+                              className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                                editCharacter.pronouns === option.value
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Age with Preset Icons */}
+                      <div className="space-y-1.5">
+                        <div className="text-xs font-medium text-zinc-700">Age Range</div>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {AGE_OPTIONS.slice(0, 5).map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setEditCharacter((c) => ({ ...c, age: option.label }))}
+                              className={`flex items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                                editCharacter.age === option.label
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                              }`}
+                            >
+                              <Icon name={option.icon as any} className="h-3 w-3" />
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
                         <input
                           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
                           value={editCharacter.age ?? ""}
                           onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), age: e.target.value || undefined }))}
-                          placeholder="25, mid-30s..."
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="text-xs font-medium text-zinc-700">Occupation</div>
-                        <input
-                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
-                          value={editCharacter.occupation ?? ""}
-                          onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), occupation: e.target.value || undefined }))}
-                          placeholder="Detective, teacher..."
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <div className="text-xs font-medium text-zinc-700">Archetype</div>
-                        <input
-                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
-                          value={editCharacter.archetype ?? ""}
-                          onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), archetype: e.target.value || undefined }))}
-                          placeholder="Hero, mentor, trickster..."
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="text-xs font-medium text-zinc-700">Skills (csv)</div>
-                        <input
-                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
-                          value={(editCharacter.skills ?? []).join(", ")}
-                          onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), skills: parseCsvList(e.target.value) }))}
-                          placeholder="Combat, negotiation..."
+                          placeholder="Or type specific age..."
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-zinc-700">Weaknesses (csv)</div>
+                      <div className="text-xs font-medium text-zinc-700">Occupation</div>
+                      <input
+                        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
+                        value={editCharacter.occupation ?? ""}
+                        onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), occupation: e.target.value || undefined }))}
+                        placeholder="Detective, teacher..."
+                      />
+                    </div>
+
+                    {/* Archetype with Preset Icons */}
+                    <div className="space-y-1.5">
+                      <div className="text-xs font-medium text-zinc-700">Character Archetype</div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {ARCHETYPE_OPTIONS.slice(0, 8).map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setEditCharacter((c) => ({ ...c, archetype: option.value }))}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                              editCharacter.archetype === option.value
+                                ? "bg-indigo-600 text-white"
+                                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                            }`}
+                            title={option.description}
+                          >
+                            <Icon name={option.icon as any} className="h-3 w-3" />
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
+                        value={editCharacter.archetype ?? ""}
+                        onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), archetype: e.target.value || undefined }))}
+                        placeholder="Or type custom archetype..."
+                      />
+                    </div>
+
+                    {/* Skills with Preset Icons */}
+                    <div className="space-y-1.5">
+                      <div className="text-xs font-medium text-zinc-700">Skills</div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {SKILL_OPTIONS.map((option) => {
+                          const isSelected = (editCharacter.skills ?? []).includes(option.value);
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                const current = editCharacter.skills ?? [];
+                                const newSkills = isSelected
+                                  ? current.filter((s) => s !== option.value)
+                                  : [...current, option.value];
+                                setEditCharacter((c) => ({ ...c, skills: newSkills }));
+                              }}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                                isSelected
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                              }`}
+                              title={option.description}
+                            >
+                              <Icon name={option.icon as any} className="h-3 w-3" />
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <input
+                        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
+                        value={(editCharacter.skills ?? []).join(", ")}
+                        onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), skills: parseCsvList(e.target.value) }))}
+                        placeholder="Or type custom skills (comma-separated)..."
+                      />
+                    </div>
+
+                    {/* Weaknesses with Preset Icons */}
+                    <div className="space-y-1.5">
+                      <div className="text-xs font-medium text-zinc-700">Weaknesses</div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {WEAKNESS_OPTIONS.map((option) => {
+                          const isSelected = (editCharacter.weaknesses ?? []).includes(option.value);
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                const current = editCharacter.weaknesses ?? [];
+                                const newWeaknesses = isSelected
+                                  ? current.filter((w) => w !== option.value)
+                                  : [...current, option.value];
+                                setEditCharacter((c) => ({ ...c, weaknesses: newWeaknesses }));
+                              }}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                                isSelected
+                                  ? "bg-rose-600 text-white"
+                                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                              }`}
+                              title={option.description}
+                            >
+                              <Icon name={option.icon as any} className="h-3 w-3" />
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                       <input
                         className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
                         value={(editCharacter.weaknesses ?? []).join(", ")}
                         onChange={(e) => setEditCharacter((c) => ({ ...(c ?? {}), weaknesses: parseCsvList(e.target.value) }))}
-                        placeholder="Fear of heights, trusts too easily..."
+                        placeholder="Or type custom weaknesses (comma-separated)..."
                       />
                     </div>
                   </div>
@@ -1168,6 +1347,29 @@ export default function WorldPage() {
                           Generate
                         </button>
                       </div>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {PERSONALITY_OPTIONS.slice(0, 8).map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              const current = editCharacter.personality || "";
+                              const addition = option.label.toLowerCase();
+                              if (!current.toLowerCase().includes(addition)) {
+                                setEditCharacter((c) => ({
+                                  ...c,
+                                  personality: current ? `${current}, ${addition}` : addition,
+                                }));
+                              }
+                            }}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-zinc-100 text-zinc-600 hover:bg-indigo-100 hover:text-indigo-700 transition-all"
+                            title={option.description}
+                          >
+                            <Icon name={option.icon as any} className="h-2.5 w-2.5" />
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                       <textarea
                         className="min-h-[80px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
                         value={editCharacter.personality ?? ""}
@@ -1191,6 +1393,29 @@ export default function WorldPage() {
                           <Icon name="sparkles" className="h-3 w-3" />
                           Generate
                         </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {APPEARANCE_OPTIONS.slice(0, 8).map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              const current = editCharacter.appearance || "";
+                              const addition = option.label.toLowerCase();
+                              if (!current.toLowerCase().includes(addition)) {
+                                setEditCharacter((c) => ({
+                                  ...c,
+                                  appearance: current ? `${current}, ${addition}` : addition,
+                                }));
+                              }
+                            }}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-zinc-100 text-zinc-600 hover:bg-emerald-100 hover:text-emerald-700 transition-all"
+                            title={option.description}
+                          >
+                            <Icon name={option.icon as any} className="h-2.5 w-2.5" />
+                            {option.label}
+                          </button>
+                        ))}
                       </div>
                       <textarea
                         className="min-h-[80px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
@@ -1216,6 +1441,29 @@ export default function WorldPage() {
                           Generate
                         </button>
                       </div>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {BACKSTORY_OPTIONS.slice(0, 8).map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              const current = editCharacter.backstory || "";
+                              const addition = option.label.toLowerCase();
+                              if (!current.toLowerCase().includes(addition)) {
+                                setEditCharacter((c) => ({
+                                  ...c,
+                                  backstory: current ? `${current}. ${option.description}` : option.description,
+                                }));
+                              }
+                            }}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-zinc-100 text-zinc-600 hover:bg-amber-100 hover:text-amber-700 transition-all"
+                            title={option.description}
+                          >
+                            <Icon name={option.icon as any} className="h-2.5 w-2.5" />
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                       <textarea
                         className="min-h-[80px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
                         value={editCharacter.backstory ?? ""}
@@ -1239,6 +1487,29 @@ export default function WorldPage() {
                           <Icon name="sparkles" className="h-3 w-3" />
                           Generate
                         </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {MOTIVATION_OPTIONS.slice(0, 8).map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              const current = editCharacter.motivation || "";
+                              const addition = option.label.toLowerCase();
+                              if (!current.toLowerCase().includes(addition)) {
+                                setEditCharacter((c) => ({
+                                  ...c,
+                                  motivation: current ? `${current}, driven by ${addition}` : `Driven by ${addition}`,
+                                }));
+                              }
+                            }}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-zinc-100 text-zinc-600 hover:bg-rose-100 hover:text-rose-700 transition-all"
+                            title={option.description}
+                          >
+                            <Icon name={option.icon as any} className="h-2.5 w-2.5" />
+                            {option.label}
+                          </button>
+                        ))}
                       </div>
                       <textarea
                         className="min-h-[80px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
@@ -1264,6 +1535,29 @@ export default function WorldPage() {
                           Generate
                         </button>
                       </div>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {VOICE_OPTIONS.slice(0, 8).map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              const current = editCharacter.voiceNotes || "";
+                              const addition = option.label.toLowerCase();
+                              if (!current.toLowerCase().includes(addition)) {
+                                setEditCharacter((c) => ({
+                                  ...c,
+                                  voiceNotes: current ? `${current}, ${addition} speech` : `${option.label} speech`,
+                                }));
+                              }
+                            }}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-zinc-100 text-zinc-600 hover:bg-sky-100 hover:text-sky-700 transition-all"
+                            title={option.description}
+                          >
+                            <Icon name={option.icon as any} className="h-2.5 w-2.5" />
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                       <textarea
                         className="min-h-[60px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200"
                         value={editCharacter.voiceNotes ?? ""}
@@ -1271,6 +1565,70 @@ export default function WorldPage() {
                         placeholder="Speech patterns, accent, vocabulary..."
                       />
                     </div>
+                  </div>
+
+                  {/* Character Preview with Wardrobe */}
+                  <CharacterPreviewPanel
+                    character={selected}
+                    characterDetails={editCharacter}
+                    media={editMedia}
+                    poses={managedPoses}
+                    onPoseSelect={(pose) => setSelectedPose(pose)}
+                    selectedPose={selectedPose || undefined}
+                    selectedExpression={selectedExpression}
+                    onExpressionChange={(expr) => setSelectedExpression(expr)}
+                  />
+
+                  {/* Pose Manager Section */}
+                  <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                        <Icon name="character" className="h-4 w-4" />
+                        Poses & Expressions
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowPoseManager(true)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-medium hover:bg-indigo-200"
+                      >
+                        <Icon name="settings" className="h-3.5 w-3.5" />
+                        Manage Poses
+                      </button>
+                    </div>
+                    
+                    {managedPoses.length > 0 ? (
+                      <div className="flex gap-2 overflow-x-auto pb-2">
+                        {managedPoses.slice(0, 6).map((pose) => (
+                          <button
+                            key={pose.id}
+                            onClick={() => setSelectedPose(pose)}
+                            className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                              selectedPose?.id === pose.id
+                                ? "border-indigo-600 ring-2 ring-indigo-200"
+                                : "border-zinc-200 hover:border-indigo-300"
+                            }`}
+                          >
+                            <img
+                              src={getTransformedUrl(pose.url, { width: 80, height: 80, crop: "fill", gravity: "auto" })}
+                              alt={pose.name}
+                              className="w-14 h-14 object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-4 text-center">
+                        <Icon name="character" className="h-6 w-6 text-zinc-300 mx-auto mb-1" />
+                        <p className="text-xs text-zinc-500">No poses uploaded yet</p>
+                        <button
+                          type="button"
+                          onClick={() => poseInputRef.current?.click()}
+                          className="mt-2 px-3 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700"
+                        >
+                          Upload First Pose
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : null}
@@ -1383,6 +1741,68 @@ export default function WorldPage() {
           }}
           onEntityChange={(e) => setSelectedId(e._id)}
         />
+      )}
+
+      {/* Face Cropper Modal */}
+      {showFaceCropper && selected && editMedia.thumbnailUrl && (
+        <ImageCropper
+          imageUrl={editMedia.thumbnailUrl}
+          onCropComplete={async (croppedUrl, cropData) => {
+            setShowFaceCropper(false);
+            // Update the face URL with the cropped version
+            const newMedia = { ...editMedia, faceUrl: croppedUrl };
+            setEditMedia(newMedia);
+            
+            // Auto-save to database
+            await apiFetch(`/api/projects/${projectId}/entities/${selected._id}`, {
+              method: "PATCH",
+              body: JSON.stringify({ media: newMedia }),
+            });
+          }}
+          onCancel={() => setShowFaceCropper(false)}
+          aspectRatio={1}
+          title="Select Face Area"
+        />
+      )}
+
+      {/* Pose Manager Modal */}
+      {showPoseManager && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white rounded-2xl shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-white">
+              <h2 className="text-lg font-bold text-zinc-900">Manage Poses</h2>
+              <button
+                onClick={() => setShowPoseManager(false)}
+                className="p-2 rounded-lg hover:bg-zinc-100"
+              >
+                <Icon name="x" className="h-5 w-5 text-zinc-500" />
+              </button>
+            </div>
+            <div className="p-4">
+              <PoseManager
+                poses={managedPoses}
+                onPosesChange={async (newPoses) => {
+                  setManagedPoses(newPoses);
+                  // Update media with new pose URLs
+                  const newMedia = {
+                    ...editMedia,
+                    poseUrls: newPoses.map(p => p.url),
+                    posePublicIds: newPoses.map(p => p.publicId).filter(Boolean) as string[],
+                  };
+                  setEditMedia(newMedia);
+                  
+                  // Auto-save to database
+                  await apiFetch(`/api/projects/${projectId}/entities/${selected._id}`, {
+                    method: "PATCH",
+                    body: JSON.stringify({ media: newMedia }),
+                  });
+                }}
+                onUploadPose={() => poseInputRef.current?.click()}
+                characterName={selected.name}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
