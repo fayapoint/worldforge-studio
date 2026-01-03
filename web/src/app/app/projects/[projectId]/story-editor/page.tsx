@@ -12,12 +12,14 @@ import {
   StoryMetadataPanel,
   StoryTimelineView,
   StoryExportModal,
+  SceneEditorModal,
+  FullBookEditor,
 } from "@/components/story-editor";
 
 // =====================================================
 // VIEW MODES
 // =====================================================
-type ViewMode = "book" | "timeline" | "cards" | "outline";
+type ViewMode = "book" | "full-book" | "timeline" | "cards" | "outline";
 
 // =====================================================
 // STORY STATISTICS
@@ -86,6 +88,7 @@ export default function StoryEditorPage() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [editingSceneId, setEditingSceneId] = useState<string | null>(null);
 
   // Computed
   const selectedNode = useMemo(() => 
@@ -278,6 +281,7 @@ export default function StoryEditorPage() {
           <div className="flex items-center gap-1 bg-zinc-100 rounded-xl p-1">
             {[
               { id: "book" as const, label: "Book View", icon: "book" as IconName },
+              { id: "full-book" as const, label: "Full Editor", icon: "edit" as IconName },
               { id: "timeline" as const, label: "Timeline", icon: "clock" as IconName },
               { id: "cards" as const, label: "Cards", icon: "layers" as IconName },
               { id: "outline" as const, label: "Outline", icon: "list" as IconName },
@@ -362,7 +366,22 @@ export default function StoryEditorPage() {
               onCreateNode={handleCreateNode}
               onDeleteNode={handleDeleteNode}
               onReorderNodes={handleReorderNodes}
+              onEditScene={setEditingSceneId}
               focusMode={focusMode}
+            />
+          )}
+          {viewMode === "full-book" && (
+            <FullBookEditor
+              nodes={sortedNodes}
+              edges={storyEdges}
+              entities={entities}
+              exportedPrompts={exportedPrompts}
+              selectedNodeId={selectedNodeId}
+              onSelectNode={setSelectedNodeId}
+              onUpdateNode={handleUpdateNode}
+              onCreateNode={handleCreateNode}
+              onDeleteNode={handleDeleteNode}
+              onEditScene={setEditingSceneId}
             />
           )}
           {viewMode === "timeline" && (
@@ -423,6 +442,24 @@ export default function StoryEditorPage() {
           onClose={() => setShowExportModal(false)}
         />
       )}
+
+      {/* Scene Editor Modal */}
+      {editingSceneId && (() => {
+        const editingScene = storyNodes.find(n => n._id === editingSceneId);
+        if (!editingScene) return null;
+        return (
+          <SceneEditorModal
+            node={editingScene}
+            entities={entities}
+            exportedPrompts={exportedPrompts}
+            projectId={projectId}
+            onUpdate={async (data) => {
+              await handleUpdateNode(editingSceneId, data);
+            }}
+            onClose={() => setEditingSceneId(null)}
+          />
+        );
+      })()}
 
       {/* Error Toast */}
       {error && (
