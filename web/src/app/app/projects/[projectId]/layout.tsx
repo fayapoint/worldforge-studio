@@ -28,6 +28,7 @@ export default function ProjectLayout({ children }: { children: React.ReactNode 
 
   const nav = [
     { href: `/app/projects/${projectId}/world`, label: "World Bible", icon: "world" as const },
+    { href: `/app/projects/${projectId}/story-editor`, label: "Story", icon: "book" as const },
     { href: `/app/projects/${projectId}/story`, label: "Story Graph", icon: "story" as const },
     { href: `/app/projects/${projectId}/wardrobe`, label: "Wardrobe", icon: "sparkles" as const },
     { href: `/app/projects/${projectId}/continuity`, label: "Continuity", icon: "continuity" as const },
