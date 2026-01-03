@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "@/lib/apiClient";
-import { Badge, Card, CardHint, CardTitle, Icon, PrimaryButton, SecondaryButton, SectionHeader, type IconName } from "@/lib/ui";
+import { Badge, Card, CardHint, CardTitle, Icon, PrimaryButton, SecondaryButton, type IconName } from "@/lib/ui";
 import {
   CONTINUITY_TEMPLATES,
   PROMPT_PACK_TEMPLATES,
@@ -16,23 +16,8 @@ import {
   type PromptPackTemplate,
   type ShotTemplate,
 } from "@/lib/continuityTemplates";
-
-type StoryNode = { 
-  _id: string; 
-  title: string; 
-  nodeType: string; 
-  synopsis?: string;
-  time: { order: number };
-  participants?: { entityId: string; role: string }[];
-  locations?: string[];
-};
-
-type Entity = {
-  _id: string;
-  name: string;
-  type: string;
-  summary?: string;
-};
+import { SceneDetailPanel, IntelligentContinuityChecker, VisualTimeline, PlotTracker } from "@/components/continuity";
+import type { StoryNode, Entity, CommunityWardrobeItem } from "@/lib/models";
 
 type Issue = {
   severity: "INFO" | "WARN" | "ERROR";
@@ -42,19 +27,23 @@ type Issue = {
   suggestion?: string;
 };
 
-type ActiveTab = "checker" | "templates" | "packs" | "timeline";
+type ActiveTab = "timeline" | "checker" | "templates" | "packs" | "plot";
 
 export default function ContinuityPage() {
   const params = useParams<{ projectId: string }>();
   const projectId = params.projectId;
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>("templates");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("timeline");
   const [nodes, setNodes] = useState<StoryNode[]>([]);
   const [entities, setEntities] = useState<Entity[]>([]);
+  const [wardrobeItems, setWardrobeItems] = useState<CommunityWardrobeItem[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string>("");
   const [issues, setIssues] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Scene detail panel
+  const [showSceneDetail, setShowSceneDetail] = useState(false);
 
   // Template state
   const [selectedTemplate, setSelectedTemplate] = useState<ContinuityTemplate | null>(null);
@@ -68,9 +57,10 @@ export default function ContinuityPage() {
 
   const load = useCallback(async () => {
     setError(null);
-    const [nodesRes, entitiesRes] = await Promise.all([
+    const [nodesRes, entitiesRes, wardrobeRes] = await Promise.all([
       apiFetch<{ items: StoryNode[] }>(`/api/projects/${projectId}/storyNodes`),
       apiFetch<{ items: Entity[] }>(`/api/projects/${projectId}/entities`),
+      apiFetch<{ items: CommunityWardrobeItem[] }>(`/api/wardrobe`),
     ]);
     
     if (!nodesRes.ok) {
@@ -85,8 +75,29 @@ export default function ContinuityPage() {
     const sorted = nodesRes.data.items.slice().sort((a, b) => (a.time?.order ?? 0) - (b.time?.order ?? 0));
     setNodes(sorted);
     setEntities(entitiesRes.data.items);
+    if (wardrobeRes.ok) {
+      setWardrobeItems(wardrobeRes.data.items || []);
+    }
     if (!selectedNodeId && sorted[0]) setSelectedNodeId(sorted[0]._id);
   }, [projectId, selectedNodeId]);
+
+  // Handle scene selection and open detail panel
+  const handleSelectScene = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    setShowSceneDetail(true);
+  }, []);
+
+  // Handle scene update
+  const handleUpdateScene = useCallback(async (updates: Partial<StoryNode>) => {
+    if (!selectedNodeId) return;
+    const res = await apiFetch(`/api/projects/${projectId}/storyNodes/${selectedNodeId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+    if (res.ok) {
+      await load();
+    }
+  }, [selectedNodeId, projectId, load]);
 
   useEffect(() => {
     void load();
@@ -214,12 +225,13 @@ export default function ContinuityPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="mt-4 flex gap-1 border-t border-zinc-100 pt-4">
+        <div className="mt-4 flex gap-1 border-t border-zinc-100 pt-4 flex-wrap">
           {[
-            { id: "templates" as const, label: "Continuity Templates", icon: "layers" as IconName, color: "from-violet-500 to-purple-600" },
-            { id: "packs" as const, label: "Prompt Packs", icon: "prompts" as IconName, color: "from-emerald-500 to-teal-600" },
-            { id: "checker" as const, label: "Auto Checker", icon: "check" as IconName, color: "from-blue-500 to-indigo-600" },
-            { id: "timeline" as const, label: "Timeline View", icon: "clock" as IconName, color: "from-amber-500 to-orange-600" },
+            { id: "timeline" as const, label: "Visual Timeline", icon: "clock" as IconName, color: "from-indigo-500 to-violet-600" },
+            { id: "checker" as const, label: "Smart Checker", icon: "continuity" as IconName, color: "from-emerald-500 to-teal-600" },
+            { id: "plot" as const, label: "Plot Tracker", icon: "story" as IconName, color: "from-purple-500 to-pink-600" },
+            { id: "templates" as const, label: "Templates", icon: "layers" as IconName, color: "from-blue-500 to-indigo-600" },
+            { id: "packs" as const, label: "Prompt Packs", icon: "prompts" as IconName, color: "from-amber-500 to-orange-600" },
           ].map(tab => (
             <button
               key={tab.id}
@@ -236,6 +248,18 @@ export default function ContinuityPage() {
           ))}
         </div>
       </div>
+
+      {/* Scene Detail Panel */}
+      {showSceneDetail && selectedNode && (
+        <SceneDetailPanel
+          node={selectedNode}
+          entities={entities}
+          projectId={projectId}
+          onUpdate={handleUpdateScene}
+          onClose={() => setShowSceneDetail(false)}
+          wardrobeItems={wardrobeItems}
+        />
+      )}
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex items-center gap-2">
@@ -767,133 +791,35 @@ export default function ContinuityPage() {
         </div>
       )}
 
-      {/* TIMELINE TAB */}
+      {/* TIMELINE TAB - New Visual Timeline */}
       {activeTab === "timeline" && (
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <CardTitle>Scene Timeline</CardTitle>
-              <CardHint>Visual continuity flow across your story</CardHint>
-            </div>
-            <Badge tone="success">{nodes.length} scenes</Badge>
-          </div>
+        <VisualTimeline
+          nodes={nodes}
+          entities={entities}
+          onSelectNode={handleSelectScene}
+          selectedNodeId={selectedNodeId}
+        />
+      )}
 
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-violet-500 via-blue-500 to-emerald-500" />
+      {/* SMART CHECKER TAB */}
+      {activeTab === "checker" && (
+        <IntelligentContinuityChecker
+          nodes={nodes}
+          entities={entities}
+          wardrobeItems={wardrobeItems}
+          projectId={projectId}
+          onSelectScene={handleSelectScene}
+        />
+      )}
 
-            {/* Timeline items */}
-            <div className="space-y-4">
-              {nodes.map((node, idx) => {
-                const nodeEntities = [
-                  ...(node.participants || []).map(p => entities.find(e => e._id === p.entityId)).filter(Boolean),
-                  ...(node.locations || []).map(locId => entities.find(e => e._id === locId)).filter(Boolean),
-                ] as Entity[];
-                
-                const isSelected = node._id === selectedNodeId;
-                
-                return (
-                  <div 
-                    key={node._id}
-                    onClick={() => setSelectedNodeId(node._id)}
-                    className={`relative flex items-start gap-4 cursor-pointer group`}
-                  >
-                    {/* Node marker */}
-                    <div className={`relative z-10 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
-                      isSelected 
-                        ? "bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-lg scale-110" 
-                        : "bg-white border-2 border-zinc-200 text-zinc-700 group-hover:border-violet-300 group-hover:shadow"
-                    }`}>
-                      {node.time?.order ?? idx}
-                    </div>
-
-                    {/* Content card */}
-                    <div className={`flex-1 rounded-xl border p-4 transition-all ${
-                      isSelected 
-                        ? "bg-violet-50 border-violet-200 shadow-md" 
-                        : "bg-white border-zinc-100 group-hover:border-zinc-200 group-hover:shadow-sm"
-                    }`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge tone={node.nodeType === "SCENE" ? "success" : node.nodeType === "CHAPTER" ? "neutral" : "warn"}>
-                              {node.nodeType}
-                            </Badge>
-                            <span className="text-sm font-semibold text-zinc-900">{node.title}</span>
-                          </div>
-                          {node.synopsis && (
-                            <p className="text-xs text-zinc-500 line-clamp-2">{node.synopsis}</p>
-                          )}
-                        </div>
-                        
-                        {isSelected && (
-                          <div className="flex gap-2">
-                            <SecondaryButton onClick={(e) => { e.stopPropagation(); setActiveTab("templates"); }}>
-                              <Icon name="layers" className="h-3 w-3" />
-                              Templates
-                            </SecondaryButton>
-                            <SecondaryButton onClick={(e) => { e.stopPropagation(); setActiveTab("packs"); }}>
-                              <Icon name="prompts" className="h-3 w-3" />
-                              Prompts
-                            </SecondaryButton>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Entities in scene */}
-                      {nodeEntities.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          {nodeEntities.slice(0, 6).map(entity => (
-                            <span 
-                              key={entity._id}
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${
-                                entity.type === "CHARACTER" 
-                                  ? "bg-blue-50 text-blue-700" 
-                                  : "bg-emerald-50 text-emerald-700"
-                              }`}
-                            >
-                              {entity.name}
-                            </span>
-                          ))}
-                          {nodeEntities.length > 6 && (
-                            <span className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-500 text-[10px] font-medium">
-                              +{nodeEntities.length - 6} more
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Continuity indicators */}
-                      {idx > 0 && (
-                        <div className="mt-3 pt-3 border-t border-zinc-100 flex items-center gap-4 text-xs text-zinc-500">
-                          <div className="flex items-center gap-1">
-                            <Icon name="arrowRight" className="h-3 w-3" />
-                            <span>From scene {nodes[idx - 1]?.time?.order ?? idx - 1}</span>
-                          </div>
-                          {/* Show shared characters */}
-                          {(() => {
-                            const prevParticipants = nodes[idx - 1]?.participants?.map(p => p.entityId) || [];
-                            const currParticipants = node.participants?.map(p => p.entityId) || [];
-                            const shared = currParticipants.filter(id => prevParticipants.includes(id));
-                            if (shared.length > 0) {
-                              return (
-                                <div className="flex items-center gap-1 text-emerald-600">
-                                  <Icon name="check" className="h-3 w-3" />
-                                  <span>{shared.length} continuing character{shared.length > 1 ? 's' : ''}</span>
-                                </div>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
+      {/* PLOT TRACKER TAB */}
+      {activeTab === "plot" && (
+        <PlotTracker
+          nodes={nodes}
+          entities={entities}
+          projectId={projectId}
+          onSelectScene={handleSelectScene}
+        />
       )}
     </div>
   );
