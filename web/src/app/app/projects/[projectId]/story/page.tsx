@@ -2163,6 +2163,7 @@ export default function StoryGraphPage() {
           onClose={() => setShowScenePreview(false)}
           onUpdate={handleUpdateNode}
           saving={saving}
+          entities={entities || []}
         />
       )}
 
