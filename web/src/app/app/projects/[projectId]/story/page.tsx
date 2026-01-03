@@ -1367,21 +1367,29 @@ export default function StoryGraphPage() {
   const handleUpdateNode = async (nodeId: string, data: Partial<StoryNode>) => {
     setSaving(true);
     try {
+      console.log("Updating node:", nodeId, "with data:", data);
       const res = await apiFetch<{ node: StoryNode }>(`/api/projects/${projectId}/storyNodes/${nodeId}`, {
         method: "PATCH",
         body: JSON.stringify(data),
       });
+      
+      console.log("Update response:", res);
       
       if (res.ok && res.data.node) {
         // Update local state with the fresh node from API response
         const freshNode = res.data.node;
         setStoryNodes(prev => prev.map(n => n._id === nodeId ? freshNode : n));
         setSelectedNode(freshNode);
+      } else if (!res.ok) {
+        // Handle API error properly
+        console.error("Failed to update node:", res.error);
+        setError(res.error?.message || "Failed to update node");
       } else {
         // Fallback to full reload if response doesn't include node
         await loadData();
       }
     } catch (err) {
+      console.error("Exception updating node:", err);
       setError(err instanceof Error ? err.message : "Failed to update node");
     } finally {
       setSaving(false);

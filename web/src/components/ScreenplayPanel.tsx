@@ -622,10 +622,19 @@ export function ScreenplayPanel({
 
   // Add character to scene
   const addCharacterToScene = useCallback(async (entityId: string) => {
-    if (!node) return;
+    console.log("Adding character to scene:", entityId);
+    if (!node) {
+      console.error("No node selected");
+      return;
+    }
     
     const entity = characters.find(c => c._id === entityId);
-    if (!entity) return;
+    if (!entity) {
+      console.error("Entity not found:", entityId);
+      return;
+    }
+
+    console.log("Found entity:", entity.name, entity._id);
 
     const newInstance: SceneCharacterInstance = {
       id: generateId(),
@@ -650,8 +659,14 @@ export function ScreenplayPanel({
       characterInstances: [...screenplay.characterInstances, newInstance],
     };
 
-    await onUpdate(node._id, { screenplay: updatedScreenplay });
-    setExpandedCharacterId(newInstance.id);
+    console.log("Calling onUpdate with screenplay:", updatedScreenplay);
+    try {
+      await onUpdate(node._id, { screenplay: updatedScreenplay });
+      console.log("onUpdate completed successfully");
+      setExpandedCharacterId(newInstance.id);
+    } catch (err) {
+      console.error("Error in addCharacterToScene:", err);
+    }
   }, [node, characters, screenplay, onUpdate]);
 
   // Update character instance

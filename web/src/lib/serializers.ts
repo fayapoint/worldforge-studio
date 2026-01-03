@@ -99,6 +99,7 @@ export function serializeStoryNode(doc: StoryNodeDoc): StoryNode {
     thumbnail: doc.thumbnail,
     parentNodeId: doc.parentNodeId,
     variationType: doc.variationType,
+    screenplay: doc.screenplay,
     version: doc.version,
     audit: {
       createdBy: oid(doc.audit.createdBy),
