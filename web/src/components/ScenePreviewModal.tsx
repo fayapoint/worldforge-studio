@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Icon, type IconName } from "@/lib/ui";
-import type { StoryNode, StoryNodeCinematicSettings, SceneVersion, Entity, SceneScreenplay, SceneCharacterInstance, DialogLine, WardrobeItem } from "@/lib/models";
+import type { StoryNode, StoryNodeCinematicSettings, SceneVersion, Entity, SceneScreenplay, SceneCharacterInstance, DialogLine, WardrobeItem, CommunityWardrobeItem } from "@/lib/models";
 import { IconOption } from "@/components/GlassCard";
+import { WardrobePicker } from "@/components/WardrobePicker";
 import {
   MOOD_OPTIONS,
   PACING_OPTIONS,
@@ -69,6 +70,32 @@ const WARDROBE_TYPE_OPTIONS = [
   { value: "ACCESSORY", label: "Accessory" },
   { value: "HEADWEAR", label: "Headwear" },
   { value: "FULL_OUTFIT", label: "Full Outfit" },
+];
+
+const DIALOG_EMOTION_PRESETS = [
+  { value: "neutral", label: "Neutral", icon: "minus" },
+  { value: "happy", label: "Happy", icon: "star" },
+  { value: "sad", label: "Sad", icon: "cloud" },
+  { value: "angry", label: "Angry", icon: "warning" },
+  { value: "fearful", label: "Fearful", icon: "alert" },
+  { value: "surprised", label: "Surprised", icon: "sparkles" },
+  { value: "whispered", label: "Whispered", icon: "volume" },
+  { value: "shouted", label: "Shouted", icon: "megaphone" },
+  { value: "sarcastic", label: "Sarcastic", icon: "smile" },
+  { value: "pleading", label: "Pleading", icon: "heart" },
+];
+
+const DIALOG_DIRECTION_PRESETS = [
+  { value: "softly", label: "Softly" },
+  { value: "firmly", label: "Firmly" },
+  { value: "hesitantly", label: "Hesitantly" },
+  { value: "confidently", label: "Confidently" },
+  { value: "mockingly", label: "Mockingly" },
+  { value: "tearfully", label: "Tearfully" },
+  { value: "coldly", label: "Coldly" },
+  { value: "warmly", label: "Warmly" },
+  { value: "urgently", label: "Urgently" },
+  { value: "dismissively", label: "Dismissively" },
 ];
 
 type ScenePreviewModalProps = {
@@ -374,6 +401,7 @@ export function ScenePreviewModal({
     };
   });
   const [expandedCharacterId, setExpandedCharacterId] = useState<string | null>(null);
+  const [showWardrobePicker, setShowWardrobePicker] = useState<string | null>(null); // Character ID for wardrobe picker
 
   // Get available characters (entities that are characters)
   const characters = useMemo(() => 
@@ -489,6 +517,20 @@ export function ScenePreviewModal({
     updateCharacterInstance(instanceId, {
       wardrobe: [...instance.wardrobe, item],
     });
+  }, [screenplay.characterInstances, updateCharacterInstance]);
+
+  // Handle community wardrobe item selection
+  const handleSelectWardrobeItem = useCallback((instanceId: string, item: CommunityWardrobeItem) => {
+    const instance = screenplay.characterInstances.find(i => i.id === instanceId);
+    if (!instance) return;
+    
+    // Append the prompt text to the current outfit description
+    const current = instance.currentOutfitDescription || "";
+    const separator = current ? ", " : "";
+    updateCharacterInstance(instanceId, {
+      currentOutfitDescription: current + separator + item.promptText,
+    });
+    setShowWardrobePicker(null);
   }, [screenplay.characterInstances, updateCharacterInstance]);
 
   // Update scene direction
@@ -1676,41 +1718,66 @@ export function ScenePreviewModal({
                                 Add Line
                               </button>
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               {instance.dialogLines.map((line, lineIdx) => (
-                                <div key={line.id} className="flex items-start gap-2">
-                                  <span className="text-xs text-zinc-400 mt-2">{lineIdx + 1}.</span>
-                                  <div className="flex-1">
-                                    <input
-                                      type="text"
+                                <div key={line.id} className="p-3 rounded-xl bg-purple-50/50 border border-purple-100">
+                                  <div className="flex items-start gap-2 mb-2">
+                                    <span className="text-xs font-bold text-purple-600 mt-2">{lineIdx + 1}.</span>
+                                    <textarea
                                       value={line.text}
                                       onChange={(e) => updateDialogLine(instance.id, line.id, { text: e.target.value })}
-                                      placeholder="Dialog text..."
-                                      className="w-full px-3 py-2 rounded-lg bg-purple-50 border border-purple-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                      placeholder="Enter dialog text..."
+                                      className="flex-1 px-3 py-2 rounded-lg bg-white border border-purple-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                                      rows={2}
                                     />
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <input
-                                        type="text"
-                                        value={line.emotion || ""}
-                                        onChange={(e) => updateDialogLine(instance.id, line.id, { emotion: e.target.value })}
-                                        placeholder="Emotion..."
-                                        className="flex-1 px-2 py-1 rounded text-xs bg-white border border-zinc-200 focus:outline-none"
-                                      />
-                                      <input
-                                        type="text"
-                                        value={line.direction || ""}
-                                        onChange={(e) => updateDialogLine(instance.id, line.id, { direction: e.target.value })}
-                                        placeholder="Direction..."
-                                        className="flex-1 px-2 py-1 rounded text-xs bg-white border border-zinc-200 focus:outline-none"
-                                      />
+                                    <button
+                                      onClick={() => removeDialogLine(instance.id, line.id)}
+                                      className="p-1.5 rounded text-red-500 hover:bg-red-50 transition-all"
+                                    >
+                                      <Icon name="x" className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                  
+                                  {/* Emotion Presets */}
+                                  <div className="mb-2">
+                                    <label className="text-[10px] font-semibold text-zinc-500 uppercase mb-1 block">Emotion</label>
+                                    <div className="flex flex-wrap gap-1">
+                                      {DIALOG_EMOTION_PRESETS.map((preset) => (
+                                        <button
+                                          key={preset.value}
+                                          onClick={() => updateDialogLine(instance.id, line.id, { emotion: line.emotion === preset.value ? "" : preset.value })}
+                                          className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${
+                                            line.emotion === preset.value
+                                              ? "bg-purple-600 text-white"
+                                              : "bg-white text-zinc-600 hover:bg-purple-50 border border-zinc-200"
+                                          }`}
+                                        >
+                                          <Icon name={preset.icon as IconName} className="h-3 w-3" />
+                                          {preset.label}
+                                        </button>
+                                      ))}
                                     </div>
                                   </div>
-                                  <button
-                                    onClick={() => removeDialogLine(instance.id, line.id)}
-                                    className="p-1.5 rounded text-red-500 hover:bg-red-50 transition-all"
-                                  >
-                                    <Icon name="x" className="h-3 w-3" />
-                                  </button>
+                                  
+                                  {/* Direction Presets */}
+                                  <div>
+                                    <label className="text-[10px] font-semibold text-zinc-500 uppercase mb-1 block">Direction</label>
+                                    <div className="flex flex-wrap gap-1">
+                                      {DIALOG_DIRECTION_PRESETS.map((preset) => (
+                                        <button
+                                          key={preset.value}
+                                          onClick={() => updateDialogLine(instance.id, line.id, { direction: line.direction === preset.value ? "" : preset.value })}
+                                          className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all ${
+                                            line.direction === preset.value
+                                              ? "bg-indigo-600 text-white"
+                                              : "bg-white text-zinc-600 hover:bg-indigo-50 border border-zinc-200"
+                                          }`}
+                                        >
+                                          {preset.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1851,20 +1918,40 @@ export function ScenePreviewModal({
 
                       {/* Current Outfit Description */}
                       <div className="mb-4">
-                        <label className="text-xs font-semibold text-zinc-500 uppercase mb-2 block">Outfit Description (for prompt)</label>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-semibold text-zinc-500 uppercase">Outfit Description (for prompt)</label>
+                          <button
+                            onClick={() => setShowWardrobePicker(instance.id)}
+                            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-medium hover:from-pink-600 hover:to-rose-600 transition-all flex items-center gap-1.5"
+                          >
+                            <Icon name="sparkles" className="h-3 w-3" />
+                            Browse Wardrobe
+                          </button>
+                        </div>
                         <textarea
                           value={instance.currentOutfitDescription || ""}
                           onChange={(e) => updateCharacterInstance(instance.id, { currentOutfitDescription: e.target.value })}
-                          placeholder="Describe the complete outfit for this scene..."
+                          placeholder="Describe the complete outfit for this scene... Click 'Browse Wardrobe' to add items from the community wardrobe"
                           className="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                          rows={2}
+                          rows={3}
                         />
                       </div>
+
+                      {/* Base Appearance Reference */}
+                      {instance.baseAppearance && (
+                        <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                          <div className="text-[10px] font-semibold text-amber-700 mb-1 flex items-center gap-1">
+                            <Icon name="info" className="h-3 w-3" />
+                            Base Appearance (from character sheet)
+                          </div>
+                          <p className="text-xs text-amber-900">{instance.baseAppearance}</p>
+                        </div>
+                      )}
 
                       {/* Wardrobe Items */}
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <label className="text-xs font-semibold text-zinc-500 uppercase">Wardrobe Items</label>
+                          <label className="text-xs font-semibold text-zinc-500 uppercase">Manual Wardrobe Items</label>
                           <button
                             onClick={() => {
                               const newItem: WardrobeItem = {
@@ -2297,6 +2384,16 @@ export function ScenePreviewModal({
           targetType={cropTarget}
           onCrop={handleCropComplete}
           onClose={() => setShowCropEditor(false)}
+        />
+      )}
+
+      {/* Wardrobe Picker Modal */}
+      {showWardrobePicker && (
+        <WardrobePicker
+          characterEntityId={screenplay.characterInstances.find(i => i.id === showWardrobePicker)?.entityId}
+          characterName={screenplay.characterInstances.find(i => i.id === showWardrobePicker)?.name}
+          onSelectItem={(item) => handleSelectWardrobeItem(showWardrobePicker, item)}
+          onClose={() => setShowWardrobePicker(null)}
         />
       )}
     </div>
