@@ -54,33 +54,41 @@ function Tooltip({ children, text }: { children: React.ReactNode; text: string }
 }
 
 // =====================================================
-// COMPACT ICON SELECTOR
+// COMPACT ICON SELECTOR - ENHANCED FOR READABILITY
 // =====================================================
 type CompactIconSelectorProps = {
   options: CinematicOption[];
   value: string;
   onChange: (value: string) => void;
   columns?: number;
+  size?: "sm" | "md" | "lg";
 };
 
-function CompactIconSelector({ options, value, onChange, columns = 4 }: CompactIconSelectorProps) {
+function CompactIconSelector({ options, value, onChange, columns = 4, size = "md" }: CompactIconSelectorProps) {
+  const sizeClasses = {
+    sm: { icon: "h-4 w-4", text: "text-[9px]", padding: "p-2", gap: "gap-1.5" },
+    md: { icon: "h-5 w-5", text: "text-[10px]", padding: "p-2.5", gap: "gap-2" },
+    lg: { icon: "h-6 w-6", text: "text-xs", padding: "p-3", gap: "gap-2" },
+  };
+  const s = sizeClasses[size];
+
   return (
-    <div className={`grid gap-1.5`} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+    <div className={`grid ${s.gap}`} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
       {options.map((option) => (
         <Tooltip key={option.value} text={option.promptText}>
           <button
             onClick={() => onChange(value === option.value ? "" : option.value)}
-            className={`group relative flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+            className={`group relative flex flex-col items-center justify-center ${s.padding} rounded-xl transition-all border ${
               value === option.value
-                ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg scale-105"
-                : "bg-white/40 hover:bg-white/70 text-zinc-700 hover:scale-105"
+                ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg scale-[1.02] border-indigo-400"
+                : "bg-white/60 hover:bg-white hover:shadow-md text-zinc-700 hover:scale-[1.02] border-white/50 hover:border-indigo-200"
             }`}
           >
-            <Icon name={option.icon as IconName} className="h-4 w-4 mb-0.5" />
-            <span className="text-[9px] font-medium truncate w-full text-center leading-tight">{option.label}</span>
+            <Icon name={option.icon as IconName} className={`${s.icon} mb-1`} />
+            <span className={`${s.text} font-semibold truncate w-full text-center leading-tight`}>{option.label}</span>
             {value === option.value && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
-                <Icon name="check" className="h-2 w-2 text-white" />
+              <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-md border-2 border-white">
+                <Icon name="check" className="h-2.5 w-2.5 text-white" />
               </div>
             )}
           </button>
@@ -109,27 +117,29 @@ function SectionHeader({
   return (
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between p-2 rounded-xl bg-white/30 hover:bg-white/50 transition-all"
+      className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/40 hover:bg-white/60 transition-all border border-white/40 shadow-sm"
     >
-      <div className="flex items-center gap-2">
-        <div className={`p-1.5 rounded-lg ${hasSelection ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white' : 'bg-white/60 text-zinc-700'}`}>
-          <Icon name={icon} className="h-3.5 w-3.5" />
+      <div className="flex items-center gap-2.5">
+        <div className={`p-2 rounded-lg shadow-sm ${hasSelection ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white' : 'bg-white/80 text-zinc-600'}`}>
+          <Icon name={icon} className="h-4 w-4" />
         </div>
-        <span className="font-semibold text-sm text-zinc-900">{title}</span>
+        <span className="font-bold text-sm text-zinc-900">{title}</span>
         {hasSelection && (
-          <span className="px-1.5 py-0.5 text-[9px] font-bold bg-green-500 text-white rounded-full">SET</span>
+          <span className="px-2 py-0.5 text-[10px] font-bold bg-green-500 text-white rounded-full shadow-sm">ACTIVE</span>
         )}
       </div>
-      <Icon 
-        name={expanded ? "chevronUp" : "chevronDown"} 
-        className="h-4 w-4 text-zinc-500 transition-transform" 
-      />
+      <div className={`p-1.5 rounded-lg ${expanded ? 'bg-indigo-100' : 'bg-white/60'} transition-all`}>
+        <Icon 
+          name={expanded ? "chevronUp" : "chevronDown"} 
+          className={`h-4 w-4 ${expanded ? 'text-indigo-600' : 'text-zinc-500'} transition-transform`} 
+        />
+      </div>
     </button>
   );
 }
 
 // =====================================================
-// QUICK PRESET BUTTON
+// QUICK PRESET BUTTON - ENHANCED
 // =====================================================
 function QuickPresetButton({ 
   preset, 
@@ -144,14 +154,19 @@ function QuickPresetButton({
     <Tooltip text={preset.tooltip}>
       <button
         onClick={onClick}
-        className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all ${
+        className={`relative flex flex-col items-center justify-center p-3.5 rounded-xl transition-all border ${
           selected
-            ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg scale-105"
-            : "bg-white/50 hover:bg-white/80 text-zinc-700 hover:scale-105"
+            ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg scale-[1.03] border-indigo-400"
+            : "bg-white/70 hover:bg-white hover:shadow-md text-zinc-700 hover:scale-[1.03] border-white/60 hover:border-indigo-200"
         }`}
       >
-        <Icon name={preset.icon as IconName} className="h-5 w-5 mb-1" />
-        <span className="text-[10px] font-semibold text-center leading-tight">{preset.name}</span>
+        <Icon name={preset.icon as IconName} className="h-6 w-6 mb-1.5" />
+        <span className="text-[11px] font-bold text-center leading-tight">{preset.name}</span>
+        {selected && (
+          <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-md border-2 border-white">
+            <Icon name="check" className="h-2.5 w-2.5 text-white" />
+          </div>
+        )}
       </button>
     </Tooltip>
   );
@@ -428,7 +443,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!activePreset}
           />
           {expandedSections.has("quick-presets") && (
-            <div className="grid grid-cols-4 gap-1.5 p-2 bg-white/20 rounded-xl">
+            <div className="grid grid-cols-4 gap-2 p-3 bg-white/30 rounded-xl">
               {QUICK_PRESETS.map(preset => (
                 <QuickPresetButton
                   key={preset.id}
@@ -451,7 +466,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!selections.visualStyle}
           />
           {expandedSections.has("style") && (
-            <div className="p-2 bg-white/20 rounded-xl">
+            <div className="p-3 bg-white/30 rounded-xl">
               <CompactIconSelector
                 options={VISUAL_STYLE_OPTIONS}
                 value={selections.visualStyle}
@@ -472,32 +487,35 @@ export function CinematicPromptBuilder({
             hasSelection={!!(selections.shotAngle || selections.shotFraming || selections.focusDepth)}
           />
           {expandedSections.has("composition") && (
-            <div className="space-y-3 p-2 bg-white/20 rounded-xl">
+            <div className="space-y-4 p-3 bg-white/30 rounded-xl">
               <div>
-                <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 block">Camera Angle</label>
+                <label className="text-xs font-bold text-zinc-600 uppercase tracking-wide mb-2 block">Camera Angle</label>
                 <CompactIconSelector
                   options={SHOT_ANGLE_OPTIONS}
                   value={selections.shotAngle}
                   onChange={(v) => updateSelection("shotAngle", v)}
-                  columns={6}
+                  columns={5}
+                  size="md"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 block">Framing</label>
+                <label className="text-xs font-bold text-zinc-600 uppercase tracking-wide mb-2 block">Framing</label>
                 <CompactIconSelector
                   options={SHOT_FRAMING_OPTIONS}
                   value={selections.shotFraming}
                   onChange={(v) => updateSelection("shotFraming", v)}
                   columns={4}
+                  size="md"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 block">Depth of Field</label>
+                <label className="text-xs font-bold text-zinc-600 uppercase tracking-wide mb-2 block">Depth of Field</label>
                 <CompactIconSelector
                   options={FOCUS_DEPTH_OPTIONS}
                   value={selections.focusDepth}
                   onChange={(v) => updateSelection("focusDepth", v)}
                   columns={4}
+                  size="md"
                 />
               </div>
             </div>
@@ -514,7 +532,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!(selections.cameraType || selections.lens || selections.filmGrain)}
           />
           {expandedSections.has("camera") && (
-            <div className="space-y-3 p-2 bg-white/20 rounded-xl">
+            <div className="space-y-4 p-3 bg-white/30 rounded-xl">
               <div>
                 <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 block">Camera Type</label>
                 <CompactIconSelector
@@ -556,7 +574,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!(selections.lightingType || selections.lightingDirection || selections.lightingQuality)}
           />
           {expandedSections.has("lighting") && (
-            <div className="space-y-3 p-2 bg-white/20 rounded-xl">
+            <div className="space-y-4 p-3 bg-white/30 rounded-xl">
               <div>
                 <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 block">Light Source</label>
                 <CompactIconSelector
@@ -598,7 +616,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!selections.colorPalette}
           />
           {expandedSections.has("color") && (
-            <div className="p-2 bg-white/20 rounded-xl">
+            <div className="p-3 bg-white/30 rounded-xl">
               <CompactIconSelector
                 options={COLOR_PALETTE_OPTIONS}
                 value={selections.colorPalette}
@@ -619,7 +637,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!(selections.timeOfDay || selections.weather || selections.locationType)}
           />
           {expandedSections.has("environment") && (
-            <div className="space-y-3 p-2 bg-white/20 rounded-xl">
+            <div className="space-y-4 p-3 bg-white/30 rounded-xl">
               <div>
                 <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 block">Time of Day</label>
                 <CompactIconSelector
@@ -661,7 +679,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!(selections.subjectExpression || selections.subjectPose)}
           />
           {expandedSections.has("subject") && (
-            <div className="space-y-3 p-2 bg-white/20 rounded-xl">
+            <div className="space-y-4 p-3 bg-white/30 rounded-xl">
               <div>
                 <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-1 block">Expression</label>
                 <CompactIconSelector
@@ -694,7 +712,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!selections.atmosphere}
           />
           {expandedSections.has("atmosphere") && (
-            <div className="p-2 bg-white/20 rounded-xl">
+            <div className="p-3 bg-white/30 rounded-xl">
               <CompactIconSelector
                 options={ATMOSPHERE_OPTIONS}
                 value={selections.atmosphere}
@@ -715,7 +733,7 @@ export function CinematicPromptBuilder({
             hasSelection={!!selections.imperfection}
           />
           {expandedSections.has("imperfection") && (
-            <div className="p-2 bg-white/20 rounded-xl">
+            <div className="p-3 bg-white/30 rounded-xl">
               <CompactIconSelector
                 options={IMPERFECTION_OPTIONS}
                 value={selections.imperfection}

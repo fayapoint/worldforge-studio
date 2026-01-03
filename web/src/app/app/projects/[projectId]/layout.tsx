@@ -31,6 +31,7 @@ export default function ProjectLayout({ children }: { children: React.ReactNode 
     { href: `/app/projects/${projectId}/story`, label: "Story Graph", icon: "story" as const },
     { href: `/app/projects/${projectId}/wardrobe`, label: "Wardrobe", icon: "sparkles" as const },
     { href: `/app/projects/${projectId}/continuity`, label: "Continuity", icon: "continuity" as const },
+    { href: `/app/projects/${projectId}/prompt-manager`, label: "Prompt Manager", icon: "wand" as const },
     { href: `/app/projects/${projectId}/prompts`, label: "Prompt Packs", icon: "prompts" as const },
     { href: `/app/projects/${projectId}/exports`, label: "Exports", icon: "exports" as const },
   ];

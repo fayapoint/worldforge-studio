@@ -1,5 +1,6 @@
 import type { ObjectId } from "mongodb";
 import type { Entity, Project, PromptPack, StoryEdge, StoryNode, Tenant, User, CommunityWardrobeItem, CharacterWardrobe } from "./models";
+import type { PromptLibraryItem, PromptPreset, PromptCollection } from "./promptLibrary";
 
 export type CursorLike<T> = {
   sort(spec: Record<string, unknown>): CursorLike<T>;
@@ -110,4 +111,44 @@ export function colCommunityWardrobe(db: DbLike): CollectionLike<CommunityWardro
 
 export function colCharacterWardrobes(db: DbLike): CollectionLike<CharacterWardrobeDoc> {
   return db.collection<CharacterWardrobeDoc>("characterWardrobes");
+}
+
+// =====================================================
+// PROMPT LIBRARY COLLECTIONS
+// =====================================================
+
+export type PromptLibraryItemDoc =
+  Omit<PromptLibraryItem, "_id" | "tenantId" | "projectId" | "createdBy"> & {
+    _id: ObjectId;
+    tenantId?: ObjectId;
+    projectId?: ObjectId;
+    createdBy: ObjectId;
+  };
+
+export type PromptPresetDoc =
+  Omit<PromptPreset, "_id" | "tenantId" | "projectId" | "createdBy"> & {
+    _id: ObjectId;
+    tenantId?: ObjectId;
+    projectId?: ObjectId;
+    createdBy: ObjectId;
+  };
+
+export type PromptCollectionDoc =
+  Omit<PromptCollection, "_id" | "tenantId" | "projectId" | "createdBy"> & {
+    _id: ObjectId;
+    tenantId?: ObjectId;
+    projectId?: ObjectId;
+    createdBy: ObjectId;
+  };
+
+export function colPromptLibrary(db: DbLike): CollectionLike<PromptLibraryItemDoc> {
+  return db.collection<PromptLibraryItemDoc>("promptLibrary");
+}
+
+export function colPromptPresets(db: DbLike): CollectionLike<PromptPresetDoc> {
+  return db.collection<PromptPresetDoc>("promptPresets");
+}
+
+export function colPromptCollections(db: DbLike): CollectionLike<PromptCollectionDoc> {
+  return db.collection<PromptCollectionDoc>("promptCollections");
 }

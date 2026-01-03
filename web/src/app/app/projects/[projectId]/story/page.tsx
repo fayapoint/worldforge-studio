@@ -61,7 +61,8 @@ function StoryTreeNode({
   selectedId, 
   onSelect,
   expandedIds,
-  onToggleExpand 
+  onToggleExpand,
+  onDrillDown,
 }: { 
   node: TreeNodeData; 
   level?: number; 
@@ -69,6 +70,7 @@ function StoryTreeNode({
   onSelect: (id: string) => void;
   expandedIds: Set<string>;
   onToggleExpand: (id: string) => void;
+  onDrillDown?: (id: string) => void;
 }) {
   const isExpanded = expandedIds.has(node.id);
   const hasChildren = node.children.length > 0;
@@ -117,9 +119,22 @@ function StoryTreeNode({
         </div>
         
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-zinc-900 text-sm truncate">{node.title}</div>
+          <div className="font-medium text-zinc-900 text-sm truncate" title={node.title}>{node.title}</div>
           <div className="text-[10px] text-zinc-500 uppercase tracking-wide">{node.type}</div>
         </div>
+        {/* Drill-down button for chapters */}
+        {node.type === "CHAPTER" && onDrillDown && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDrillDown(node.id);
+            }}
+            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600 transition-all"
+            title="View chapter contents"
+          >
+            <Icon name="arrowRight" className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
       
       {hasChildren && isExpanded && (
@@ -133,6 +148,7 @@ function StoryTreeNode({
               onSelect={onSelect}
               expandedIds={expandedIds}
               onToggleExpand={onToggleExpand}
+              onDrillDown={onDrillDown}
             />
           ))}
         </div>
@@ -142,23 +158,41 @@ function StoryTreeNode({
 }
 
 // =====================================================
-// LEFT NAVIGATION PANEL
+// VIEW MODE FOR HIERARCHICAL NAVIGATION
+// =====================================================
+type ViewMode = "overview" | "chapter" | "scene";
+type ViewContext = {
+  mode: ViewMode;
+  chapterId?: string;
+  sceneId?: string;
+};
+
+// =====================================================
+// LEFT NAVIGATION PANEL - REDESIGNED FOR READABILITY
 // =====================================================
 function NavigationPanel({ 
   storyNodes, 
   selectedId, 
   onSelect,
   onCollapse,
-  isCollapsed 
+  isCollapsed,
+  onViewContextChange,
+  viewContext,
 }: { 
   storyNodes: StoryNode[]; 
   selectedId: string | null;
   onSelect: (id: string) => void;
   onCollapse: () => void;
   isCollapsed: boolean;
+  onViewContextChange?: (context: ViewContext) => void;
+  viewContext?: ViewContext;
 }) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
+  const [localViewContext, setLocalViewContext] = useState<ViewContext>({ mode: "overview" });
+  
+  const currentViewContext = viewContext || localViewContext;
+  const setViewContext = onViewContextChange || setLocalViewContext;
 
   // Build tree structure from flat nodes
   const treeData = useMemo(() => {
@@ -237,112 +271,175 @@ function NavigationPanel({
     setExpandedIds(new Set());
   };
 
+  // Get current chapter for breadcrumb
+  const currentChapter = currentViewContext.chapterId 
+    ? storyNodes.find(n => n._id === currentViewContext.chapterId)
+    : null;
+
+  // Get scenes for current chapter
+  const chaptersForNav = storyNodes.filter(n => n.nodeType === "CHAPTER").sort((a, b) => (a.time?.order || 0) - (b.time?.order || 0));
+  const scenesForNav = storyNodes.filter(n => n.nodeType === "SCENE").sort((a, b) => (a.time?.order || 0) - (b.time?.order || 0));
+
   if (isCollapsed) {
     return (
-      <div className="h-full flex flex-col items-center py-4 bg-white/20 backdrop-blur-xl border-r border-white/20">
+      <div className="h-full flex flex-col items-center py-4 bg-white/30 backdrop-blur-xl border-r border-white/30 shadow-lg">
         <button
           onClick={onCollapse}
-          className="p-2 rounded-xl hover:bg-white/40 transition-all"
+          className="p-2.5 rounded-xl hover:bg-white/50 transition-all mb-4"
           title="Expand Navigation"
         >
           <Icon name="chevronRight" className="h-5 w-5 text-zinc-700" />
         </button>
-        <div className="mt-4 flex flex-col gap-2">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
-            <Icon name="chapter" className="h-4 w-4" />
-          </div>
-          <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white">
-            <Icon name="scene" className="h-4 w-4" />
-          </div>
-          <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
-            <Icon name="beat" className="h-4 w-4" />
-          </div>
+        <div className="flex flex-col gap-3">
+          <button 
+            onClick={() => { onCollapse(); setViewContext({ mode: "overview" }); }}
+            className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-md hover:scale-105 transition-all"
+            title="Chapters"
+          >
+            <Icon name="chapter" className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={() => { onCollapse(); }}
+            className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white shadow-md hover:scale-105 transition-all"
+            title="Scenes"
+          >
+            <Icon name="scene" className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={() => { onCollapse(); }}
+            className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md hover:scale-105 transition-all"
+            title="Beats"
+          >
+            <Icon name="beat" className="h-5 w-5" />
+          </button>
+        </div>
+        {/* Mini stats */}
+        <div className="mt-auto flex flex-col gap-1 text-center">
+          <div className="text-xs font-bold text-purple-600">{chaptersForNav.length}</div>
+          <div className="text-xs font-bold text-blue-600">{scenesForNav.length}</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-white/20 backdrop-blur-xl border-r border-white/20 transition-all duration-300">
-      {/* Header */}
-      <div className="p-4 border-b border-white/20">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-zinc-900 flex items-center gap-2">
-            <Icon name="layers" className="h-4 w-4 text-indigo-600" />
-            Story Structure
-          </h3>
-          <button
-            onClick={onCollapse}
-            className="p-1.5 rounded-lg hover:bg-white/40 transition-all"
-            title="Collapse"
-          >
-            <Icon name="chevronLeft" className="h-4 w-4 text-zinc-500" />
-          </button>
-        </div>
+    <div className="h-full flex flex-col bg-white/30 backdrop-blur-xl border-r border-white/30 shadow-lg transition-all duration-300">
+      {/* Header with Breadcrumb */}
+      <div className="flex-shrink-0 border-b border-white/30">
+        {/* Breadcrumb Navigation */}
+        {currentViewContext.mode !== "overview" && (
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-center gap-2 text-sm">
+              <button
+                onClick={() => setViewContext({ mode: "overview" })}
+                className="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 hover:underline"
+              >
+                <Icon name="layers" className="h-3.5 w-3.5" />
+                All
+              </button>
+              {currentChapter && (
+                <>
+                  <Icon name="chevronRight" className="h-3 w-3 text-zinc-400" />
+                  <span className="text-zinc-700 font-medium truncate max-w-[150px]">
+                    {currentChapter.title}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         
-        {/* Search */}
-        <div className="relative">
-          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search nodes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/40 border border-white/20 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-          />
-        </div>
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-zinc-900 flex items-center gap-2 text-base">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                <Icon name="layers" className="h-4 w-4" />
+              </div>
+              {currentViewContext.mode === "overview" ? "Story Structure" : "Chapter View"}
+            </h3>
+            <button
+              onClick={onCollapse}
+              className="p-2 rounded-lg hover:bg-white/50 transition-all"
+              title="Collapse"
+            >
+              <Icon name="chevronLeft" className="h-4 w-4 text-zinc-500" />
+            </button>
+          </div>
+          
+          {/* Search */}
+          <div className="relative">
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Search nodes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/60 border border-white/40 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+            />
+          </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={expandAll}
-            className="flex-1 px-3 py-1.5 rounded-lg bg-white/40 text-xs font-medium text-zinc-700 hover:bg-white/60 transition-all"
-          >
-            Expand All
-          </button>
-          <button
-            onClick={collapseAll}
-            className="flex-1 px-3 py-1.5 rounded-lg bg-white/40 text-xs font-medium text-zinc-700 hover:bg-white/60 transition-all"
-          >
-            Collapse All
-          </button>
+          {/* Quick Actions */}
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={expandAll}
+              className="flex-1 px-3 py-2 rounded-xl bg-white/50 text-xs font-semibold text-zinc-700 hover:bg-white/80 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Icon name="chevronDown" className="h-3 w-3" />
+              Expand
+            </button>
+            <button
+              onClick={collapseAll}
+              className="flex-1 px-3 py-2 rounded-xl bg-white/50 text-xs font-semibold text-zinc-700 hover:bg-white/80 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Icon name="chevronUp" className="h-3 w-3" />
+              Collapse
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Tree View */}
-      <div className="flex-1 overflow-auto p-2">
+      {/* Tree View - Improved with better spacing and readability */}
+      <div className="flex-1 overflow-auto px-3 py-2">
         {filteredTree.length === 0 ? (
-          <div className="text-center py-8 text-zinc-500 text-sm">
-            {searchTerm ? "No nodes found" : "No story nodes yet"}
+          <div className="text-center py-12 px-4">
+            <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 text-zinc-400">
+              <Icon name="search" className="h-6 w-6" />
+            </div>
+            <p className="text-zinc-500 text-sm">
+              {searchTerm ? "No nodes match your search" : "No story nodes yet"}
+            </p>
           </div>
         ) : (
-          filteredTree.map((node) => (
-            <StoryTreeNode
-              key={node.id}
-              node={node}
-              selectedId={selectedId}
-              onSelect={onSelect}
-              expandedIds={expandedIds}
-              onToggleExpand={toggleExpand}
-            />
-          ))
+          <div className="space-y-1">
+            {filteredTree.map((node) => (
+              <StoryTreeNode
+                key={node.id}
+                node={node}
+                selectedId={selectedId}
+                onSelect={onSelect}
+                expandedIds={expandedIds}
+                onToggleExpand={toggleExpand}
+                onDrillDown={(id) => setViewContext({ mode: "chapter", chapterId: id })}
+              />
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Stats Footer */}
-      <div className="p-3 border-t border-white/20 bg-white/10">
-        <div className="flex justify-around text-center">
-          <div>
-            <div className="text-lg font-bold text-indigo-600">{storyNodes.filter(n => n.nodeType === "CHAPTER").length}</div>
-            <div className="text-[10px] text-zinc-500 uppercase">Chapters</div>
+      {/* Stats Footer - Enhanced */}
+      <div className="flex-shrink-0 p-4 border-t border-white/30 bg-white/20">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="text-center p-2 rounded-xl bg-purple-50 border border-purple-100">
+            <div className="text-xl font-bold text-purple-600">{storyNodes.filter(n => n.nodeType === "CHAPTER").length}</div>
+            <div className="text-[10px] text-purple-500 uppercase font-semibold tracking-wide">Chapters</div>
           </div>
-          <div>
-            <div className="text-lg font-bold text-blue-600">{storyNodes.filter(n => n.nodeType === "SCENE").length}</div>
-            <div className="text-[10px] text-zinc-500 uppercase">Scenes</div>
+          <div className="text-center p-2 rounded-xl bg-blue-50 border border-blue-100">
+            <div className="text-xl font-bold text-blue-600">{storyNodes.filter(n => n.nodeType === "SCENE").length}</div>
+            <div className="text-[10px] text-blue-500 uppercase font-semibold tracking-wide">Scenes</div>
           </div>
-          <div>
-            <div className="text-lg font-bold text-emerald-600">{storyNodes.filter(n => n.nodeType === "BEAT").length}</div>
-            <div className="text-[10px] text-zinc-500 uppercase">Beats</div>
+          <div className="text-center p-2 rounded-xl bg-emerald-50 border border-emerald-100">
+            <div className="text-xl font-bold text-emerald-600">{storyNodes.filter(n => n.nodeType === "BEAT").length}</div>
+            <div className="text-[10px] text-emerald-500 uppercase font-semibold tracking-wide">Beats</div>
           </div>
         </div>
       </div>
@@ -1040,6 +1137,9 @@ export default function StoryGraphPage() {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   
+  // View context for hierarchical navigation (drill-down into chapters)
+  const [viewContext, setViewContext] = useState<ViewContext>({ mode: "overview" });
+  
   // Generated prompt state
   const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
   
@@ -1136,15 +1236,35 @@ export default function StoryGraphPage() {
         y = BEAT_Y;
       }
       
+      // Determine border color based on type
+      const borderColor = node.nodeType === "CHAPTER" 
+        ? "border-purple-300" 
+        : node.nodeType === "SCENE" 
+          ? "border-blue-300"
+          : "border-emerald-300";
+      
+      const bgGradient = node.nodeType === "CHAPTER" 
+        ? "from-purple-50/95 to-white/90" 
+        : node.nodeType === "SCENE" 
+          ? "from-blue-50/95 to-white/90"
+          : "from-emerald-50/95 to-white/90";
+
       return {
         id: node._id,
         type: "default",
         position: { x, y },
         data: {
           label: (
-          <div className="min-w-[200px] rounded-2xl border border-white/30 bg-gradient-to-br from-white/80 to-white/60 p-4 shadow-xl backdrop-blur-xl">
-            <div className="mb-2 flex items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg ${
+          <div className={`min-w-[240px] max-w-[280px] rounded-2xl border-2 ${borderColor} bg-gradient-to-br ${bgGradient} p-4 shadow-xl backdrop-blur-xl hover:shadow-2xl transition-shadow cursor-pointer`}>
+            {/* Thumbnail if available */}
+            {node.thumbnail?.url && (
+              <div className="-mx-4 -mt-4 mb-3 h-24 overflow-hidden rounded-t-xl">
+                <img src={node.thumbnail.url} alt="" className="w-full h-full object-cover" />
+              </div>
+            )}
+            
+            <div className="flex items-start gap-3">
+              <div className={`flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-xl shadow-lg ${
                 node.nodeType === "CHAPTER" 
                   ? "bg-gradient-to-br from-purple-500 to-indigo-600" 
                   : node.nodeType === "SCENE" 
@@ -1153,23 +1273,31 @@ export default function StoryGraphPage() {
               } text-white`}>
                 <Icon name={node.nodeType === "CHAPTER" ? "chapter" : node.nodeType === "SCENE" ? "scene" : "beat"} className="h-5 w-5" />
               </div>
-              <div className="flex-1">
-                <div className="font-semibold text-zinc-900 line-clamp-1">{node.title}</div>
-                <div className="text-xs text-zinc-500">{node.nodeType}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-zinc-900 line-clamp-2 text-sm leading-tight" title={node.title}>{node.title}</div>
+                <div className="text-[10px] text-zinc-500 uppercase font-semibold tracking-wide mt-0.5">{node.nodeType}</div>
               </div>
             </div>
+            
             {node.synopsis && (
-              <div className="mt-2 text-xs text-zinc-600 line-clamp-2">{node.synopsis}</div>
+              <div className="mt-3 text-xs text-zinc-600 line-clamp-2 leading-relaxed bg-white/50 rounded-lg p-2">{node.synopsis}</div>
             )}
-            <div className="mt-3 flex items-center gap-2">
+            
+            {/* Status badges */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
               {node.goals?.dramaticGoal && (
-                <div className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">Goal</div>
+                <div className="rounded-full bg-purple-100 border border-purple-200 px-2 py-0.5 text-[10px] font-semibold text-purple-700">Goal</div>
               )}
               {node.goals?.conflict && (
-                <div className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">Conflict</div>
+                <div className="rounded-full bg-red-100 border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-700">Conflict</div>
               )}
               {node.hooks?.hook && (
-                <div className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">Hook</div>
+                <div className="rounded-full bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Hook</div>
+              )}
+              {node.versionHistory?.versions && node.versionHistory.versions.length > 0 && (
+                <div className="rounded-full bg-indigo-100 border border-indigo-200 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                  V{node.versionHistory?.activeVersionNumber || node.versionHistory?.versions?.length || 1}
+                </div>
               )}
             </div>
           </div>
@@ -1875,15 +2003,15 @@ export default function StoryGraphPage() {
         return {
           left: "w-0 hidden",
           center: "flex-1",
-          right: "w-80",
+          right: "w-[420px]",
         };
       case "fullscreen-graph":
         return null; // handled separately
       default:
         return {
-          left: leftPanelCollapsed ? "w-12" : "w-56",
+          left: leftPanelCollapsed ? "w-14" : "w-80",
           center: "flex-1",
-          right: rightPanelCollapsed ? "w-12" : "w-80",
+          right: rightPanelCollapsed ? "w-14" : "w-[420px]",
         };
     }
   };
@@ -1994,23 +2122,48 @@ export default function StoryGraphPage() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col overflow-hidden">
-      {/* Compact Header */}
-      <div className="flex-shrink-0 px-3 py-1.5 bg-white/40 backdrop-blur-xl border-b border-white/20">
+      {/* Compact Header with Breadcrumb */}
+      <div className="flex-shrink-0 px-4 py-2 bg-white/50 backdrop-blur-xl border-b border-white/30 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 text-white">
-              <Icon name="story" className="h-4 w-4" />
+          <div className="flex items-center gap-4">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg">
+              <Icon name="story" className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-zinc-900">Story Graph</h1>
-              <p className="text-xs text-zinc-500">AI-powered visual story structure</p>
+              {/* Breadcrumb Navigation */}
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold text-zinc-900">Story Graph</h1>
+                {viewContext.mode !== "overview" && viewContext.chapterId && (
+                  <>
+                    <Icon name="chevronRight" className="h-4 w-4 text-zinc-400" />
+                    <span className="text-lg font-semibold text-purple-700">
+                      {storyNodes.find(n => n._id === viewContext.chapterId)?.title || "Chapter"}
+                    </span>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                {viewContext.mode === "overview" 
+                  ? "AI-powered visual story structure" 
+                  : "Viewing chapter scenes and beats"}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {error && (
               <div className="px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 max-w-xs truncate">
                 {error}
               </div>
+            )}
+            {viewContext.mode !== "overview" && (
+              <GlassButton 
+                size="sm" 
+                variant="secondary"
+                onClick={() => setViewContext({ mode: "overview" })}
+              >
+                <Icon name="chevronLeft" className="h-3.5 w-3.5" />
+                Back to Overview
+              </GlassButton>
             )}
             <GlassButton size="sm" onClick={() => setShowCreateNode(true)}>
               <Icon name="plus" className="h-3.5 w-3.5" />
@@ -2036,6 +2189,8 @@ export default function StoryGraphPage() {
               }
             }}
             isCollapsed={layoutMode === "graph-focus" || leftPanelCollapsed}
+            viewContext={viewContext}
+            onViewContextChange={setViewContext}
           />
         </div>
 

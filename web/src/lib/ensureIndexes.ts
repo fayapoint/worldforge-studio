@@ -9,6 +9,9 @@ import {
   colUsers,
   colCommunityWardrobe,
   colCharacterWardrobes,
+  colPromptLibrary,
+  colPromptPresets,
+  colPromptCollections,
 } from "./collections";
 
 let ensured = false;
@@ -56,6 +59,34 @@ export async function ensureIndexes() {
 
   // Character Wardrobes indexes
   await colCharacterWardrobes(db).createIndex({ entityId: 1 }, { unique: true });
+
+  // Prompt Library indexes
+  await colPromptLibrary(db).createIndex({ category: 1, subcategory: 1 });
+  await colPromptLibrary(db).createIndex({ visibility: 1 });
+  await colPromptLibrary(db).createIndex({ tags: 1 });
+  await colPromptLibrary(db).createIndex({ isBuiltIn: 1 });
+  await colPromptLibrary(db).createIndex({ usageCount: -1 });
+  await colPromptLibrary(db).createIndex({ createdBy: 1 });
+  await colPromptLibrary(db).createIndex({ tenantId: 1, projectId: 1 });
+  await colPromptLibrary(db).createIndex({ suggestedPlacements: 1 });
+  await colPromptLibrary(db).createIndex({
+    name: "text",
+    description: "text",
+    promptText: "text",
+    tags: "text",
+  });
+
+  // Prompt Presets indexes
+  await colPromptPresets(db).createIndex({ category: 1 });
+  await colPromptPresets(db).createIndex({ visibility: 1 });
+  await colPromptPresets(db).createIndex({ showInQuickAccess: 1, quickAccessOrder: 1 });
+  await colPromptPresets(db).createIndex({ createdBy: 1 });
+  await colPromptPresets(db).createIndex({ tenantId: 1, projectId: 1 });
+
+  // Prompt Collections indexes
+  await colPromptCollections(db).createIndex({ parentCollectionId: 1 });
+  await colPromptCollections(db).createIndex({ visibility: 1 });
+  await colPromptCollections(db).createIndex({ createdBy: 1 });
 
   ensured = true;
 }
